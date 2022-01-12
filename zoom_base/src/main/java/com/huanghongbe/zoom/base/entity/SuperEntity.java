@@ -3,7 +3,7 @@ package com.huanghongbe.zoom.base.entity;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
 import com.huanghongbe.zoom.base.enums.EStatus;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
+
 
 import java.util.Date;
 
