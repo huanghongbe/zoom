@@ -14,7 +14,7 @@ public class EStatus {
     /**
      * 启用的
      */
-    public static final int ENABLED = 0;
+    public static final int ENABLE = 0;
 
     /**
      * 冻结的

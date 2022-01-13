@@ -1,7 +1,7 @@
 package com.huanghongbe.zoom.xo.mapper;
 
 import com.huanghongbe.zoom.base.mapper.SuperMapper;
-import com.huanghongbe.zoom.common.entity.Blog;
+import com.huanghongbe.zoom.commons.entity.Blog;
 
 /**
  * @author ：huanghongbe

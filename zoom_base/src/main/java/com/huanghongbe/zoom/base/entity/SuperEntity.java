@@ -37,7 +37,7 @@ public class SuperEntity<T extends Model> extends Model{
     private Date updateTime;
 
     public SuperEntity(){
-        status= EStatus.ENABLED;
+        status= EStatus.ENABLE;
         Date date=new Date();
         createTime=date;
         updateTime=date;

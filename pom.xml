@@ -62,6 +62,7 @@
         <module>zoom_utils</module>
         <module>zoom_xo</module>
         <module>zoom_commons</module>
+        <module>zoom_web</module>
     </modules>
 
     <dependencyManagement>
