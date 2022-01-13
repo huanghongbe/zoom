@@ -1,5 +1,7 @@
 package com.huanghongbe.zoom.base.vo;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 /**
@@ -9,6 +11,7 @@ import lombok.Data;
  */
 @Data
 public class BaseVO<T> extends PageInfo<T>{
+    @TableId(type = IdType.UUID)
     private String uid;
     private Integer status;
 }
