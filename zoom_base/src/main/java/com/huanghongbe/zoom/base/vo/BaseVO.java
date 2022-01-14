@@ -11,7 +11,6 @@ import lombok.Data;
  */
 @Data
 public class BaseVO<T> extends PageInfo<T>{
-    @TableId(type = IdType.UUID)
     private String uid;
     private Integer status;
 }

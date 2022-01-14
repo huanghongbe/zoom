@@ -7,6 +7,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
+/**
+ * 用于自定义数据填充逻辑
+ * insert和update填充时间
+ */
 @Slf4j
 @Component
 public class MetaObjectHandlerConfig implements MetaObjectHandler {
