@@ -4,7 +4,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.ComponentScan;
 
 import javax.annotation.PostConstruct;
@@ -19,7 +18,7 @@ import java.util.TimeZone;
 @ComponentScan(basePackages = {
         "com.huanghongbe.zoom.commons.config",
 //        "com.huanghongbe.zoom.commons.fallback",
-//        "com.huanghongbe.zoom.utils",
+        "com.huanghongbe.zoom.utils",
 //        "com.huanghongbe.zoom.xo.utils",
         "com.huanghongbe.zoom.web",
         "com.huanghongbe.zoom.xo.service"})

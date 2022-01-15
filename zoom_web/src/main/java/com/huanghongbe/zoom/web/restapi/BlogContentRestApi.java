@@ -1,6 +1,8 @@
 package com.huanghongbe.zoom.web.restapi;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.huanghongbe.zoom.base.enums.ECode;
 import com.huanghongbe.zoom.base.enums.EPublish;
 import com.huanghongbe.zoom.base.enums.EStatus;
@@ -9,7 +11,10 @@ import com.huanghongbe.zoom.utils.IpUtils;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.utils.StringUtils;
 import com.huanghongbe.zoom.xo.service.BlogService;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,6 +22,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * @author ：huanghongbe
@@ -61,13 +67,28 @@ public class BlogContentRestApi {
         return ResultUtil.result("success", blog);
     }
 
-//    @RequestMapping("/test/add")
-//    public String add(BlogVO blogVO){
-//        return blogService.addBlog(blogVO);
-//    }
-//
-//    @RequestMapping("/test/delete")
-//    public String delete(BlogVO blogVO){
-//        return blogService.deleteBlog(blogVO);
-//    }
+    @GetMapping("/getBlogPraiseCountByUid")
+    public String getBlogPraiseCountByUid(@RequestParam(name = "uid", required = false) String uid) {
+        return null;
+        //return ResultUtil.result("success", blogService.getBlogPraiseCountByUid(uid));
+    }
+
+    @GetMapping("/praiseBlogByUid")
+    public String praiseBlogByUid(@RequestParam(name = "uid", required = false) String uid) {
+        return null;
+    }
+
+
+    @GetMapping("/getSameBlogByTagUid")
+    public String getSameBlogByTagUid(@RequestParam(name = "tagUid", required = true) String tagUid,
+                                      @RequestParam(name = "currentPage", required = false, defaultValue = "1") Long currentPage,
+                                      @RequestParam(name = "pageSize", required = false, defaultValue = "10") Long pageSize) {
+       return null;
+    }
+
+
+    @GetMapping("/getSameBlogByBlogUid")
+    public String getSameBlogByBlogUid(@ApiParam(name = "blogUid", value = "博客标签UID", required = true) @RequestParam(name = "blogUid", required = true) String blogUid) {
+       return null;
+    }
 }
