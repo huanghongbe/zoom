@@ -492,9 +492,4 @@ public class IpUtils {
         return "未知";
     }
 
-    public static void main(String args[]) {
-        String ip = "220.248.12.158";
-        String cityIpString = getCityInfo(ip);
-        System.out.println(cityIpString);
-    }
 }

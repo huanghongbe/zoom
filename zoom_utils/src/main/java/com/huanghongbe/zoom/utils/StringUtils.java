@@ -303,10 +303,10 @@ public class StringUtils {
      * 获取雪花UID
      * @return
      */
-    public static Long getSnowflakeId() {
-        SnowflakeIdWorker snowflakeIdWorker = new SnowflakeIdWorker(0, 0);
-        return snowflakeIdWorker.nextId();
-    }
+//    public static Long getSnowflakeId() {
+//        SnowflakeIdWorker snowflakeIdWorker = new SnowflakeIdWorker(0, 0);
+//        return snowflakeIdWorker.nextId();
+//    }
 
     /**
      * list小于0的数据就过滤了

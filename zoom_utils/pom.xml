@@ -131,6 +131,7 @@
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
+
         <!-- mp依赖
              mybatisPlus 会自动的维护Mybatis 以及MyBatis-spring相关的依赖
          -->
