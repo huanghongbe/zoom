@@ -1,7 +1,7 @@
 package com.huanghongbe.zoom.base.exception;
 
-import com.huanghongbe.zoom.base.enums.Constants;
 import com.huanghongbe.zoom.base.enums.SystemLanguageEnum;
+import com.huanghongbe.zoom.base.global.Constants;
 import com.huanghongbe.zoom.utils.StringUtils;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.util.CollectionUtils;

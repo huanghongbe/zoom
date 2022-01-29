@@ -1,6 +1,6 @@
 package com.huanghongbe.zoom.base.exception.exceptionType;
 
-import com.huanghongbe.zoom.base.enums.BaseMessageConf;
+import com.huanghongbe.zoom.base.global.BaseMessageConf;
 import com.huanghongbe.zoom.base.global.ErrorCode;
 
 import java.io.Serializable;

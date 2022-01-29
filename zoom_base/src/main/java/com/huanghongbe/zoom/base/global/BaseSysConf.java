@@ -10,6 +10,8 @@ public class BaseSysConf {
 
     public final static String DEFAULT_UID = "uid00000000000000000000000000000";
     public final static String LIMIT_ONE = "LIMIT 1";
+    public final static String LIMIT_TEN = "LIMIT 10";
+    public final static String LIMIT = "LIMIT";
     public final static String OID = "oid";
 
     /**

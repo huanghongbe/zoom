@@ -1,8 +1,8 @@
 package com.huanghongbe.zoom.base.exception;
 
 import cn.hutool.core.collection.CollectionUtil;
-import com.huanghongbe.zoom.base.enums.Constants;
 import com.huanghongbe.zoom.base.exception.exceptionType.ApiInvalidParamException;
+import com.huanghongbe.zoom.base.global.Constants;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 

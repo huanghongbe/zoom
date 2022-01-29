@@ -1,6 +1,6 @@
 package com.huanghongbe.zoom.base.vo;
 
-import com.huanghongbe.zoom.base.enums.Constants;
+import com.huanghongbe.zoom.base.global.Constants;
 import com.huanghongbe.zoom.base.global.ErrorCode;
 import com.huanghongbe.zoom.utils.StringUtils;
 import lombok.Data;
