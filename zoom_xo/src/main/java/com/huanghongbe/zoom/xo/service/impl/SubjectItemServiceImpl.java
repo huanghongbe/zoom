@@ -1,3 +1,5 @@
+package com.huanghongbe.zoom.xo.service.impl;
+
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.huanghongbe.zoom.base.service.impl.SuperServiceImpl;
 import com.huanghongbe.zoom.commons.entity.SubjectItem;
