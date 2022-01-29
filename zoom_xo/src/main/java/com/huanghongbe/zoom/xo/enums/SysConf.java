@@ -1,7 +1,7 @@
 package com.huanghongbe.zoom.xo.enums;
 
 
-import com.huanghongbe.zoom.base.enums.BaseSysConf;
+import com.huanghongbe.zoom.base.global.BaseSysConf;
 
 /**
  * 系统常量

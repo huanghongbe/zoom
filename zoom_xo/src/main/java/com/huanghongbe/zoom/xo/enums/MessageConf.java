@@ -1,6 +1,6 @@
 package com.huanghongbe.zoom.xo.enums;
 
-import com.huanghongbe.zoom.base.enums.BaseMessageConf;
+import com.huanghongbe.zoom.base.global.BaseMessageConf;
 
 /**
  * 消息通知

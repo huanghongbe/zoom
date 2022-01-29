@@ -1,7 +1,7 @@
 package com.huanghongbe.zoom.xo.enums;
 
 
-import com.huanghongbe.zoom.base.enums.BaseRedisConf;
+import com.huanghongbe.zoom.base.global.BaseRedisConf;
 
 /**
  * Redis常量类

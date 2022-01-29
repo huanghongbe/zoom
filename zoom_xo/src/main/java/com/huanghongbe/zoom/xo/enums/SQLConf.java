@@ -1,7 +1,7 @@
 package com.huanghongbe.zoom.xo.enums;
 
 
-import com.huanghongbe.zoom.base.enums.BaseSQLConf;
+import com.huanghongbe.zoom.base.global.BaseSQLConf;
 
 /**
  * SQL字段常量
