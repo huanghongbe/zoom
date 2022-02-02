@@ -8,16 +8,21 @@ import com.huanghongbe.zoom.base.global.BaseSQLConf;
 import com.huanghongbe.zoom.base.global.Constants;
 import com.huanghongbe.zoom.base.service.impl.SuperServiceImpl;
 import com.huanghongbe.zoom.commons.entity.Blog;
-import com.huanghongbe.zoom.utils.JsonUtils;
-import com.huanghongbe.zoom.utils.RedisUtil;
-import com.huanghongbe.zoom.utils.ResultUtil;
-import com.huanghongbe.zoom.utils.StringUtils;
+import com.huanghongbe.zoom.commons.entity.BlogSort;
+import com.huanghongbe.zoom.commons.entity.Tag;
+import com.huanghongbe.zoom.utils.*;
 import com.huanghongbe.zoom.xo.enums.MessageConf;
 import com.huanghongbe.zoom.xo.enums.RedisConf;
 import com.huanghongbe.zoom.xo.enums.SQLConf;
 import com.huanghongbe.zoom.xo.enums.SysConf;
 import com.huanghongbe.zoom.xo.mapper.BlogMapper;
+import com.huanghongbe.zoom.xo.mapper.BlogSortMapper;
+import com.huanghongbe.zoom.xo.mapper.TagMapper;
 import com.huanghongbe.zoom.xo.service.BlogService;
+import com.huanghongbe.zoom.xo.service.BlogSortService;
+import com.huanghongbe.zoom.xo.service.SysParamsService;
+import com.huanghongbe.zoom.xo.service.TagService;
+import com.huanghongbe.zoom.xo.utils.WebUtil;
 import com.huanghongbe.zoom.xo.vo.BlogVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,6 +35,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -41,11 +47,23 @@ import java.util.stream.Collectors;
 public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implements BlogService {
 
     @Autowired
+    private BlogSortService blogSortService;
+    @Autowired
+    private WebUtil webUtil;
+    @Autowired
+    private TagService tagService;
+    @Autowired
     private BlogService blogService;
     @Resource
     private BlogMapper blogMapper;
     @Autowired
     private RedisUtil redisUtil;
+    @Resource
+    private TagMapper tagMapper;
+    @Resource
+    private BlogSortMapper blogSortMapper;
+    @Autowired
+    private SysParamsService sysParamsService;
     @Override
     public List<Blog> setTagByBlogList(List<Blog> list) {
         List<Blog> notNullList=list.stream().filter(Objects::nonNull).collect(Collectors.toList());
@@ -65,12 +83,28 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
 
     @Override
     public Blog setTagByBlog(Blog blog) {
-        return null;
+        String tagUid = blog.getTagUid();
+        if (!StringUtils.isEmpty(tagUid)) {
+            String[] uids = tagUid.split(SysConf.FILE_SEGMENTATION);
+            List<Tag> tagList = new ArrayList<>();
+            for (String uid : uids) {
+                Tag tag = tagMapper.selectById(uid);
+                if (tag != null && tag.getStatus() != EStatus.DISABLED) {
+                    tagList.add(tag);
+                }
+            }
+            blog.setTagList(tagList);
+        }
+        return blog;
     }
 
     @Override
     public Blog setSortByBlog(Blog blog) {
-        return null;
+        if (blog != null && !StringUtils.isEmpty(blog.getBlogSortUid())) {
+            BlogSort blogSort = blogSortMapper.selectById(blog.getBlogSortUid());
+            blog.setBlogSort(blogSort);
+        }
+        return blog;
     }
 
     @Override
@@ -107,18 +141,180 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
 
     @Override
     public List<Map<String, Object>> getBlogCountByTag() {
-        //从redis中获取
-        return null;
+        // 从Redis中获取标签下包含的博客数量
+        String jsonArrayList = redisUtil.get(RedisConf.DASHBOARD + Constants.SYMBOL_COLON + RedisConf.BLOG_COUNT_BY_TAG);
+        if (StringUtils.isNotEmpty(jsonArrayList)) {
+            ArrayList jsonList = JsonUtils.jsonArrayToArrayList(jsonArrayList);
+            return jsonList;
+        }
+
+        List<Map<String, Object>> blogCoutByTagMap = blogMapper.getBlogCountByTag();
+        Map<String, Integer> tagMap = new HashMap<>();
+        for (Map<String, Object> item : blogCoutByTagMap) {
+            String tagUid = String.valueOf(item.get(SQLConf.TAG_UID));
+            // java.lang.Number是Integer,Long的父类
+            Number num = (Number) item.get(SysConf.COUNT);
+            Integer count = num.intValue();
+            //如果只有一个UID的情况
+            if (tagUid.length() == 32) {
+                //如果没有这个内容的话，就设置
+                if (tagMap.get(tagUid) == null) {
+                    tagMap.put(tagUid, count);
+                } else {
+                    Integer tempCount = tagMap.get(tagUid) + count;
+                    tagMap.put(tagUid, tempCount);
+                }
+            } else {
+                //如果长度大于32，说明含有多个UID
+                if (StringUtils.isNotEmpty(tagUid)) {
+                    List<String> strList = StringUtils.changeStringToString(tagUid, ",");
+                    for (String strItem : strList) {
+                        if (tagMap.get(strItem) == null) {
+                            tagMap.put(strItem, count);
+                        } else {
+                            Integer tempCount = tagMap.get(strItem) + count;
+                            tagMap.put(strItem, tempCount);
+                        }
+                    }
+                }
+            }
+        }
+
+        //把查询到的Tag放到Map中
+        Set<String> tagUids = tagMap.keySet();
+        Collection<Tag> tagCollection = new ArrayList<>();
+        if (tagUids.size() > 0) {
+            tagCollection = tagMapper.selectBatchIds(tagUids);
+        }
+
+        Map<String, String> tagEntityMap = new HashMap<>();
+        for (Tag tag : tagCollection) {
+            if (StringUtils.isNotEmpty(tag.getContent())) {
+                tagEntityMap.put(tag.getUid(), tag.getContent());
+            }
+        }
+
+        List<Map<String, Object>> resultList = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : tagMap.entrySet()) {
+            String tagUid = entry.getKey();
+            if (tagEntityMap.get(tagUid) != null) {
+                String tagName = tagEntityMap.get(tagUid);
+                Integer count = entry.getValue();
+                Map<String, Object> itemResultMap = new HashMap<>();
+                itemResultMap.put(SysConf.TAG_UID, tagUid);
+                itemResultMap.put(SysConf.NAME, tagName);
+                itemResultMap.put(SysConf.VALUE, count);
+                resultList.add(itemResultMap);
+            }
+        }
+        // 将 每个标签下文章数目 存入到Redis【过期时间2小时】
+        if (resultList.size() > 0) {
+            redisUtil.setEx(RedisConf.DASHBOARD + Constants.SYMBOL_COLON + RedisConf.BLOG_COUNT_BY_TAG, JsonUtils.objectToJson(resultList), 2, TimeUnit.HOURS);
+        }
+        return resultList;
     }
 
     @Override
     public List<Map<String, Object>> getBlogCountByBlogSort() {
-        return null;
+        // 从Redis中获取博客分类下包含的博客数量
+        String jsonArrayList = redisUtil.get(RedisConf.DASHBOARD + Constants.SYMBOL_COLON + RedisConf.BLOG_COUNT_BY_SORT);
+        if (StringUtils.isNotEmpty(jsonArrayList)) {
+            ArrayList jsonList = JsonUtils.jsonArrayToArrayList(jsonArrayList);
+            return jsonList;
+        }
+        List<Map<String, Object>> blogCoutByBlogSortMap = blogMapper.getBlogCountByBlogSort();
+        Map<String, Integer> blogSortMap = new HashMap<>();
+        for (Map<String, Object> item : blogCoutByBlogSortMap) {
+
+            String blogSortUid = String.valueOf(item.get(SQLConf.BLOG_SORT_UID));
+            // java.lang.Number是Integer,Long的父类
+            Number num = (Number) item.get(SysConf.COUNT);
+            Integer count = 0;
+            if (num != null) {
+                count = num.intValue();
+            }
+            blogSortMap.put(blogSortUid, count);
+        }
+
+        //把查询到的BlogSort放到Map中
+        Set<String> blogSortUids = blogSortMap.keySet();
+        Collection<BlogSort> blogSortCollection = new ArrayList<>();
+
+        if (blogSortUids.size() > 0) {
+            blogSortCollection = blogSortMapper.selectBatchIds(blogSortUids);
+        }
+
+        Map<String, String> blogSortEntityMap = new HashMap<>();
+        for (BlogSort blogSort : blogSortCollection) {
+            if (StringUtils.isNotEmpty(blogSort.getSortName())) {
+                blogSortEntityMap.put(blogSort.getUid(), blogSort.getSortName());
+            }
+        }
+
+        List<Map<String, Object>> resultList = new ArrayList<Map<String, Object>>();
+        for (Map.Entry<String, Integer> entry : blogSortMap.entrySet()) {
+
+            String blogSortUid = entry.getKey();
+
+            if (blogSortEntityMap.get(blogSortUid) != null) {
+                String blogSortName = blogSortEntityMap.get(blogSortUid);
+                Integer count = entry.getValue();
+                Map<String, Object> itemResultMap = new HashMap<>();
+                itemResultMap.put(SysConf.BLOG_SORT_UID, blogSortUid);
+                itemResultMap.put(SysConf.NAME, blogSortName);
+                itemResultMap.put(SysConf.VALUE, count);
+                resultList.add(itemResultMap);
+            }
+        }
+        // 将 每个分类下文章数目 存入到Redis【过期时间2小时】
+        if (resultList.size() > 0) {
+            redisUtil.setEx(RedisConf.DASHBOARD + Constants.SYMBOL_COLON + RedisConf.BLOG_COUNT_BY_SORT, JsonUtils.objectToJson(resultList), 2, TimeUnit.HOURS);
+        }
+        return resultList;
     }
 
     @Override
     public Map<String, Object> getBlogContributeCount() {
-        return null;
+        // 从Redis中获取博客分类下包含的博客数量
+        String jsonMap = redisUtil.get(RedisConf.DASHBOARD + Constants.SYMBOL_COLON + RedisConf.BLOG_CONTRIBUTE_COUNT);
+        if (StringUtils.isNotEmpty(jsonMap)) {
+            Map<String, Object> resultMap = JsonUtils.jsonToMap(jsonMap);
+            return resultMap;
+        }
+
+        // 获取今天结束时间
+        String endTime = DateUtils.getNowTime();
+        // 获取365天前的日期
+        Date temp = DateUtils.getDate(endTime, -365);
+        String startTime = DateUtils.dateTimeToStr(temp);
+        List<Map<String, Object>> blogContributeMap = blogMapper.getBlogContributeCount(startTime, endTime);
+        List<String> dateList = DateUtils.getDayBetweenDates(startTime, endTime);
+        Map<String, Object> dateMap = new HashMap<>();
+        for (Map<String, Object> itemMap : blogContributeMap) {
+            dateMap.put(itemMap.get("DATE").toString(), itemMap.get("COUNT"));
+        }
+
+        List<List<Object>> resultList = new ArrayList<>();
+        for (String item : dateList) {
+            Integer count = 0;
+            if (dateMap.get(item) != null) {
+                count = Integer.valueOf(dateMap.get(item).toString());
+            }
+            List<Object> objectList = new ArrayList<>();
+            objectList.add(item);
+            objectList.add(count);
+            resultList.add(objectList);
+        }
+
+        Map<String, Object> resultMap = new HashMap<>(Constants.NUM_TWO);
+        List<String> contributeDateList = new ArrayList<>();
+        contributeDateList.add(startTime);
+        contributeDateList.add(endTime);
+        resultMap.put(SysConf.CONTRIBUTE_DATE, contributeDateList);
+        resultMap.put(SysConf.BLOG_CONTRIBUTE_COUNT, resultList);
+        // 将 全年博客贡献度 存入到Redis【过期时间2小时】
+        redisUtil.setEx(RedisConf.DASHBOARD + Constants.SYMBOL_COLON + RedisConf.BLOG_CONTRIBUTE_COUNT, JsonUtils.objectToJson(resultMap), 2, TimeUnit.HOURS);
+        return resultMap;
     }
 
     @Override
@@ -259,22 +455,217 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
 
     @Override
     public IPage<Blog> getBlogPageByLevel(Integer level, Long currentPage, Integer useSort) {
-        return null;
+        //从Redis中获取内容
+        String jsonResult = redisUtil.get(RedisConf.BLOG_LEVEL + RedisConf.SEGMENTATION + level);
+
+        //判断redis中是否有文章
+        if (StringUtils.isNotEmpty(jsonResult)) {
+            List jsonResult2List = JsonUtils.jsonArrayToArrayList(jsonResult);
+            IPage pageList = new Page();
+            pageList.setRecords(jsonResult2List);
+            return pageList;
+        }
+        Page<Blog> page = new Page<>();
+        page.setCurrent(currentPage);
+        String blogCount = null;
+        switch (level) {
+            case ELevel.NORMAL: {
+                blogCount = sysParamsService.getSysParamsValueByKey(SysConf.BLOG_NEW_COUNT);
+            }
+            break;
+            case ELevel.FIRST: {
+                blogCount = sysParamsService.getSysParamsValueByKey(SysConf.BLOG_FIRST_COUNT);
+            }
+            break;
+            case ELevel.SECOND: {
+                blogCount = sysParamsService.getSysParamsValueByKey(SysConf.BLOG_SECOND_COUNT);
+            }
+            break;
+            case ELevel.THIRD: {
+                blogCount = sysParamsService.getSysParamsValueByKey(SysConf.BLOG_THIRD_COUNT);
+            }
+            break;
+            case ELevel.FOURTH: {
+                blogCount = sysParamsService.getSysParamsValueByKey(SysConf.BLOG_FOURTH_COUNT);
+            }
+            break;
+        }
+        if (StringUtils.isEmpty(blogCount)) {
+            log.error(MessageConf.PLEASE_CONFIGURE_SYSTEM_PARAMS);
+        } else {
+            page.setSize(Long.valueOf(blogCount));
+        }
+
+        IPage<Blog> pageList = blogService.getBlogPageByLevel(page, level, useSort);
+        List<Blog> list = pageList.getRecords();
+
+        // 一级推荐或者二级推荐没有内容时，自动把top5填充至一级推荐和二级推荐中
+        if ((level == SysConf.ONE || level == SysConf.TWO) && list.size() == 0) {
+            QueryWrapper<Blog> queryWrapper = new QueryWrapper<>();
+            Page<Blog> hotPage = new Page<>();
+            hotPage.setCurrent(1);
+            String blogHotCount = sysParamsService.getSysParamsValueByKey(SysConf.BLOG_HOT_COUNT);
+            String blogSecondCount = sysParamsService.getSysParamsValueByKey(SysConf.BLOG_SECOND_COUNT);
+            if (StringUtils.isEmpty(blogHotCount) || StringUtils.isEmpty(blogSecondCount)) {
+                log.error(MessageConf.PLEASE_CONFIGURE_SYSTEM_PARAMS);
+            } else {
+                hotPage.setSize(Long.valueOf(blogHotCount));
+            }
+            queryWrapper.eq(SQLConf.STATUS, EStatus.ENABLE);
+            queryWrapper.eq(SQLConf.IS_PUBLISH, EPublish.PUBLISH);
+            queryWrapper.orderByDesc(SQLConf.CLICK_COUNT);
+            queryWrapper.select(Blog.class, i -> !i.getProperty().equals(SQLConf.CONTENT));
+            IPage<Blog> hotPageList = blogService.page(hotPage, queryWrapper);
+            List<Blog> hotBlogList = hotPageList.getRecords();
+            List<Blog> secondBlogList = new ArrayList<>();
+            List<Blog> firstBlogList = new ArrayList<>();
+            for (int a = 0; a < hotBlogList.size(); a++) {
+                // 当推荐大于两个的时候
+                if ((hotBlogList.size() - firstBlogList.size()) > Long.valueOf(blogSecondCount)) {
+                    firstBlogList.add(hotBlogList.get(a));
+                } else {
+                    secondBlogList.add(hotBlogList.get(a));
+                }
+            }
+
+            firstBlogList = setBlog(firstBlogList);
+            secondBlogList = setBlog(secondBlogList);
+
+            // 将从数据库查询的数据缓存到redis中，设置1小时后过期 [避免 list 中没有数据而保存至 redis 的情况]
+            if (firstBlogList.size() > 0) {
+                redisUtil.setEx(RedisConf.BLOG_LEVEL + Constants.SYMBOL_COLON + Constants.NUM_ONE, JsonUtils.objectToJson(firstBlogList), 1, TimeUnit.HOURS);
+            }
+            if (secondBlogList.size() > 0) {
+                redisUtil.setEx(RedisConf.BLOG_LEVEL + Constants.SYMBOL_COLON + Constants.NUM_TWO, JsonUtils.objectToJson(secondBlogList), 1, TimeUnit.HOURS);
+            }
+
+            switch (level) {
+                case SysConf.ONE: {
+                    pageList.setRecords(firstBlogList);
+                }
+                break;
+                case SysConf.TWO: {
+                    pageList.setRecords(secondBlogList);
+                }
+                break;
+            }
+            return pageList;
+        }
+
+        list = setBlog(list);
+        pageList.setRecords(list);
+
+        // 将从数据库查询的数据缓存到redis中 [避免 list 中没有数据而保存至 redis 的情况]
+        if (list.size() > 0) {
+            redisUtil.setEx(SysConf.BLOG_LEVEL + SysConf.REDIS_SEGMENTATION + level, JsonUtils.objectToJson(list).toString(), 1, TimeUnit.HOURS);
+        }
+        return pageList;
     }
 
     @Override
     public IPage<Blog> getHotBlog() {
-        return null;
+        //从Redis中获取内容
+        String jsonResult = redisUtil.get(RedisConf.HOT_BLOG);
+        //判断redis中是否有文章
+        if (StringUtils.isNotEmpty(jsonResult)) {
+            List jsonResult2List = JsonUtils.jsonArrayToArrayList(jsonResult);
+            IPage pageList = new Page();
+            pageList.setRecords(jsonResult2List);
+            return pageList;
+        }
+        QueryWrapper<Blog> queryWrapper = new QueryWrapper<>();
+        Page<Blog> page = new Page<>();
+        page.setCurrent(0);
+        String blogHotCount = sysParamsService.getSysParamsValueByKey(SysConf.BLOG_HOT_COUNT);
+        if (StringUtils.isEmpty(blogHotCount)) {
+            log.error(MessageConf.PLEASE_CONFIGURE_SYSTEM_PARAMS);
+        } else {
+            page.setSize(Long.valueOf(blogHotCount));
+        }
+        queryWrapper.eq(SQLConf.STATUS, EStatus.ENABLE);
+        queryWrapper.eq(SQLConf.IS_PUBLISH, EPublish.PUBLISH);
+        queryWrapper.orderByDesc(SQLConf.CLICK_COUNT);
+        //因为首页并不需要显示内容，所以需要排除掉内容字段
+        queryWrapper.select(Blog.class, i -> !i.getProperty().equals(SQLConf.CONTENT));
+        IPage<Blog> pageList = blogService.page(page, queryWrapper);
+        List<Blog> list = pageList.getRecords();
+        list = setBlog(list);
+        pageList.setRecords(list);
+        // 将从数据库查询的数据缓存到redis中[避免list中没有数据而保存至redis的情况]
+        if (list.size() > 0) {
+            redisUtil.setEx(RedisConf.HOT_BLOG, JsonUtils.objectToJson(list), 1, TimeUnit.HOURS);
+        }
+        return pageList;
     }
 
     @Override
     public IPage<Blog> getNewBlog(Long currentPage, Long pageSize) {
-        return null;
+        String blogNewCount = sysParamsService.getSysParamsValueByKey(SysConf.BLOG_NEW_COUNT);
+        if (StringUtils.isEmpty(blogNewCount)) {
+            log.error(MessageConf.PLEASE_CONFIGURE_SYSTEM_PARAMS);
+        }
+
+//        // 判断Redis中是否缓存了第一页的内容
+//        if (currentPage == 1L) {
+//            //从Redis中获取内容
+//            String jsonResult = redisUtil.get(RedisConf.NEW_BLOG);
+//            //判断redis中是否有文章
+//            if (StringUtils.isNotEmpty(jsonResult)) {
+//                IPage pageList = JsonUtils.jsonToPojo(jsonResult, Page.class);
+//                return pageList;
+//            }
+//        }
+
+        QueryWrapper<Blog> queryWrapper = new QueryWrapper<>();
+        Page<Blog> page = new Page<>();
+        page.setCurrent(currentPage);
+        page.setSize(Long.valueOf(blogNewCount));
+        queryWrapper.eq(SQLConf.STATUS, EStatus.ENABLE);
+        queryWrapper.eq(BaseSQLConf.IS_PUBLISH, EPublish.PUBLISH);
+        queryWrapper.orderByDesc(SQLConf.CREATE_TIME);
+
+        //因为首页并不需要显示内容，所以需要排除掉内容字段
+        queryWrapper.select(Blog.class, i -> !i.getProperty().equals(SQLConf.CONTENT));
+
+        IPage<Blog> pageList = blogService.page(page, queryWrapper);
+        List<Blog> list = pageList.getRecords();
+
+        if (list.size() <= 0) {
+            return pageList;
+        }
+
+        list = setBlog(list);
+        pageList.setRecords(list);
+
+        //将从最新博客缓存到redis中
+//        if (currentPage == 1L) {
+//            redisUtil.setEx(RedisConf.NEW_BLOG, JsonUtils.objectToJson(pageList), 1, TimeUnit.HOURS);
+//        }
+        return pageList;
     }
 
     @Override
     public IPage<Blog> getBlogBySearch(Long currentPage, Long pageSize) {
-        return null;
+        QueryWrapper<Blog> queryWrapper = new QueryWrapper<>();
+        Page<Blog> page = new Page<>();
+        page.setCurrent(currentPage);
+        String blogNewCount = sysParamsService.getSysParamsValueByKey(SysConf.BLOG_NEW_COUNT);
+        if (StringUtils.isEmpty(blogNewCount)) {
+            log.error(MessageConf.PLEASE_CONFIGURE_SYSTEM_PARAMS);
+        } else {
+            page.setSize(Long.valueOf(blogNewCount));
+        }
+        queryWrapper.eq(SQLConf.STATUS, EStatus.ENABLE);
+        queryWrapper.eq(BaseSQLConf.IS_PUBLISH, EPublish.PUBLISH);
+        queryWrapper.orderByDesc(SQLConf.CREATE_TIME);
+        IPage<Blog> pageList = blogService.page(page, queryWrapper);
+        List<Blog> list = pageList.getRecords();
+        if (list.size() <= 0) {
+            return pageList;
+        }
+        list = setBlog(list);
+        pageList.setRecords(list);
+        return pageList;
     }
 
     @Override
@@ -496,4 +887,93 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
         redisUtil.set(SysConf.MONTH_SET, JsonUtils.objectToJson(monthSet));
         return ResultUtil.successWithData(map.get(monthDate));
     }
+
+    /**
+     * 设置博客的分类标签和内容
+     *
+     * @param list
+     * @return
+     */
+    private List<Blog> setBlog(List<Blog> list) {
+        final StringBuffer fileUids = new StringBuffer();
+        List<String> sortUids = new ArrayList<>();
+        List<String> tagUids = new ArrayList<>();
+
+        list.forEach(item -> {
+            if (StringUtils.isNotEmpty(item.getFileUid())) {
+                fileUids.append(item.getFileUid() + SysConf.FILE_SEGMENTATION);
+            }
+            if (StringUtils.isNotEmpty(item.getBlogSortUid())) {
+                sortUids.add(item.getBlogSortUid());
+            }
+            if (StringUtils.isNotEmpty(item.getTagUid())) {
+                tagUids.add(item.getTagUid());
+            }
+        });
+        String pictureList = null;
+
+//        if (fileUids != null) {
+//            pictureList = this.pictureFeignClient.getPicture(fileUids.toString(), SysConf.FILE_SEGMENTATION);
+//        }
+        List<Map<String, Object>> picList = webUtil.getPictureMap(pictureList);
+        Collection<BlogSort> sortList = new ArrayList<>();
+        Collection<Tag> tagList = new ArrayList<>();
+        if (sortUids.size() > 0) {
+            sortList = blogSortService.listByIds(sortUids);
+        }
+        if (tagUids.size() > 0) {
+            tagList = tagService.listByIds(tagUids);
+        }
+
+        Map<String, BlogSort> sortMap = new HashMap<>();
+        Map<String, Tag> tagMap = new HashMap<>();
+        Map<String, String> pictureMap = new HashMap<>();
+
+        sortList.forEach(item -> {
+            sortMap.put(item.getUid(), item);
+        });
+
+        tagList.forEach(item -> {
+            tagMap.put(item.getUid(), item);
+        });
+
+        picList.forEach(item -> {
+            pictureMap.put(item.get(SQLConf.UID).toString(), item.get(SQLConf.URL).toString());
+        });
+
+
+        for (Blog item : list) {
+
+            //设置分类
+            if (StringUtils.isNotEmpty(item.getBlogSortUid())) {
+                item.setBlogSort(sortMap.get(item.getBlogSortUid()));
+            }
+
+            //获取标签
+            if (StringUtils.isNotEmpty(item.getTagUid())) {
+                List<String> tagUidsTemp = StringUtils.changeStringToString(item.getTagUid(), SysConf.FILE_SEGMENTATION);
+                List<Tag> tagListTemp = new ArrayList<Tag>();
+
+                tagUidsTemp.forEach(tag -> {
+                    if (tagMap.get(tag) != null) {
+                        tagListTemp.add(tagMap.get(tag));
+                    }
+                });
+                item.setTagList(tagListTemp);
+            }
+
+            //获取图片
+            if (StringUtils.isNotEmpty(item.getFileUid())) {
+                List<String> pictureUidsTemp = StringUtils.changeStringToString(item.getFileUid(), SysConf.FILE_SEGMENTATION);
+                List<String> pictureListTemp = new ArrayList<>();
+
+                pictureUidsTemp.forEach(picture -> {
+                    pictureListTemp.add(pictureMap.get(picture));
+                });
+                item.setPhotoList(pictureListTemp);
+            }
+        }
+        return list;
+    }
+
 }

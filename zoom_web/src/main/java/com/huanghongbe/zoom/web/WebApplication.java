@@ -19,7 +19,7 @@ import java.util.TimeZone;
         "com.huanghongbe.zoom.commons.config",
 //        "com.huanghongbe.zoom.commons.fallback",
         "com.huanghongbe.zoom.utils",
-//        "com.huanghongbe.zoom.xo.utils",
+        "com.huanghongbe.zoom.xo.utils",
         "com.huanghongbe.zoom.web",
         "com.huanghongbe.zoom.xo.service"})
 public class WebApplication {
