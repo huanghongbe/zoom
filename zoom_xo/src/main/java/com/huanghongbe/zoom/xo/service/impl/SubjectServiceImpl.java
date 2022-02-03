@@ -9,6 +9,7 @@ import com.huanghongbe.zoom.base.global.BaseSysConf;
 import com.huanghongbe.zoom.base.service.impl.SuperServiceImpl;
 import com.huanghongbe.zoom.commons.entity.Subject;
 import com.huanghongbe.zoom.commons.entity.SubjectItem;
+import com.huanghongbe.zoom.commons.feign.PictureFeignClient;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.utils.StringUtils;
 import com.huanghongbe.zoom.xo.enums.MessageConf;
@@ -35,8 +36,8 @@ public class SubjectServiceImpl extends SuperServiceImpl<SubjectMapper, Subject>
     private SubjectService subjectService;
     @Autowired
     private SubjectItemService subjectItemService;
-//    @Resource
-//    private PictureFeignClient pictureFeignClient;
+    @Resource
+    private PictureFeignClient pictureFeignClient;
     @Autowired
     private WebUtil webUtil;
     @Override
@@ -61,9 +62,9 @@ public class SubjectServiceImpl extends SuperServiceImpl<SubjectMapper, Subject>
         });
         String pictureResult = null;
         Map<String, String> pictureMap = new HashMap<>();
-//        if (fileUids != null) {
-//            pictureResult = this.pictureFeignClient.getPicture(fileUids.toString(), BaseSysConf.FILE_SEGMENTATION);
-//        }
+        if (fileUids != null) {
+            pictureResult = this.pictureFeignClient.getPicture(fileUids.toString(), BaseSysConf.FILE_SEGMENTATION);
+        }
         List<Map<String, Object>> picList = webUtil.getPictureMap(pictureResult);
         picList.forEach(item -> {
             pictureMap.put(item.get(SysConf.UID).toString(), item.get(SysConf.URL).toString());

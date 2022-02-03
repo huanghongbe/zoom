@@ -5,11 +5,13 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.huanghongbe.zoom.base.enums.*;
 import com.huanghongbe.zoom.base.global.BaseSQLConf;
+import com.huanghongbe.zoom.base.global.BaseSysConf;
 import com.huanghongbe.zoom.base.global.Constants;
 import com.huanghongbe.zoom.base.service.impl.SuperServiceImpl;
 import com.huanghongbe.zoom.commons.entity.Blog;
 import com.huanghongbe.zoom.commons.entity.BlogSort;
 import com.huanghongbe.zoom.commons.entity.Tag;
+import com.huanghongbe.zoom.commons.feign.PictureFeignClient;
 import com.huanghongbe.zoom.utils.*;
 import com.huanghongbe.zoom.xo.enums.MessageConf;
 import com.huanghongbe.zoom.xo.enums.RedisConf;
@@ -64,6 +66,8 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
     private BlogSortMapper blogSortMapper;
     @Autowired
     private SysParamsService sysParamsService;
+    @Autowired
+    private PictureFeignClient pictureFeignClient;
     @Override
     public List<Blog> setTagByBlogList(List<Blog> list) {
         List<Blog> notNullList=list.stream().filter(Objects::nonNull).collect(Collectors.toList());
@@ -78,7 +82,116 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
 
     @Override
     public List<Blog> setTagAndSortAndPictureByBlogList(List<Blog> list) {
-        return null;
+        List<String> sortUids = new ArrayList<>();
+        List<String> tagUids = new ArrayList<>();
+        Set<String> fileUidSet = new HashSet<>();
+
+        list.forEach(item -> {
+            if (StringUtils.isNotEmpty(item.getFileUid())) {
+                fileUidSet.add(item.getFileUid());
+            }
+            if (StringUtils.isNotEmpty(item.getBlogSortUid())) {
+                sortUids.add(item.getBlogSortUid());
+            }
+            if (StringUtils.isNotEmpty(item.getTagUid())) {
+                // tagUid有多个，还需要切分
+                if (StringUtils.isNotEmpty(item.getTagUid())) {
+                    List<String> tagUidsTemp = StringUtils.changeStringToString(item.getTagUid(), BaseSysConf.FILE_SEGMENTATION);
+                    for (String itemTagUid : tagUidsTemp) {
+                        tagUids.add(itemTagUid);
+                    }
+                }
+            }
+        });
+
+        String pictureList = null;
+        StringBuffer fileUids = new StringBuffer();
+        List<Map<String, Object>> picList = new ArrayList<>();
+        // feign分页查询图片数据
+        if(fileUidSet.size() > 0) {
+            int count = 1;
+            for(String fileUid: fileUidSet) {
+                fileUids.append(fileUid + ",");
+                System.out.println(count%10);
+                if(count%10 == 0) {
+                    pictureList = this.pictureFeignClient.getPicture(fileUids.toString(), ",");
+                    List<Map<String, Object>> tempPicList = webUtil.getPictureMap(pictureList);
+                    picList.addAll(tempPicList);
+                    fileUids = new StringBuffer();
+                }
+                count ++;
+            }
+            // 判断是否存在图片需要获取
+            if(fileUids.length() >= Constants.NUM_32) {
+                pictureList = this.pictureFeignClient.getPicture(fileUids.toString(), Constants.SYMBOL_COMMA);
+                List<Map<String, Object>> tempPicList = webUtil.getPictureMap(pictureList);
+                picList.addAll(tempPicList);
+            }
+        }
+
+        Collection<BlogSort> sortList = new ArrayList<>();
+        Collection<Tag> tagList = new ArrayList<>();
+        if (sortUids.size() > 0) {
+            sortList = blogSortService.listByIds(sortUids);
+        }
+        if (tagUids.size() > 0) {
+            tagList = tagService.listByIds(tagUids);
+        }
+        Map<String, BlogSort> sortMap = new HashMap<>();
+        Map<String, Tag> tagMap = new HashMap<>();
+        Map<String, String> pictureMap = new HashMap<>();
+
+        sortList.forEach(item -> {
+            sortMap.put(item.getUid(), item);
+        });
+
+        tagList.forEach(item -> {
+            tagMap.put(item.getUid(), item);
+        });
+
+        picList.forEach(item -> {
+            pictureMap.put(item.get(SysConf.UID).toString(), item.get(SysConf.URL).toString());
+        });
+
+        for (Blog item : list) {
+            //设置分类
+            if (StringUtils.isNotEmpty(item.getBlogSortUid())) {
+
+                item.setBlogSort(sortMap.get(item.getBlogSortUid()));
+                if (sortMap.get(item.getBlogSortUid()) != null) {
+                    item.setBlogSortName(sortMap.get(item.getBlogSortUid()).getSortName());
+                }
+            }
+
+            //获取标签
+            if (StringUtils.isNotEmpty(item.getTagUid())) {
+                List<String> tagUidsTemp = StringUtils.changeStringToString(item.getTagUid(), ",");
+                List<Tag> tagListTemp = new ArrayList<Tag>();
+
+                tagUidsTemp.forEach(tag -> {
+                    tagListTemp.add(tagMap.get(tag));
+                });
+                item.setTagList(tagListTemp);
+            }
+
+            //获取图片
+            if (StringUtils.isNotEmpty(item.getFileUid())) {
+                List<String> pictureUidsTemp = StringUtils.changeStringToString(item.getFileUid(), Constants.SYMBOL_COMMA);
+                List<String> pictureListTemp = new ArrayList<String>();
+
+                pictureUidsTemp.forEach(picture -> {
+                    pictureListTemp.add(pictureMap.get(picture));
+                });
+                item.setPhotoList(pictureListTemp);
+                // 只设置一张标题图
+                if (pictureListTemp.size() > 0) {
+                    item.setPhotoUrl(pictureListTemp.get(0));
+                } else {
+                    item.setPhotoUrl("");
+                }
+            }
+        }
+        return list;
     }
 
     @Override
@@ -769,7 +882,37 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
 
     @Override
     public IPage<Blog> searchBlogByTag(String tagUid, Long currentPage, Long pageSize) {
-        return null;
+        Tag tag = tagService.getById(tagUid);
+        if (tag != null) {
+            HttpServletRequest request=((ServletRequestAttributes)RequestContextHolder.getRequestAttributes()).getRequest();
+            String ip = IpUtils.getIpAddr(request);
+            //从Redis取出数据，判断该用户24小时内，是否点击过该标签
+            String jsonResult = redisUtil.get(RedisConf.TAG_CLICK + RedisConf.SEGMENTATION + ip + "#" + tagUid);
+            if (StringUtils.isEmpty(jsonResult)) {
+                //给标签点击数增加
+                int clickCount = tag.getClickCount() + 1;
+                tag.setClickCount(clickCount);
+                tag.updateById();
+                //将该用户点击记录存储到redis中, 24小时后过期
+                redisUtil.setEx(RedisConf.TAG_CLICK + RedisConf.SEGMENTATION + ip + RedisConf.WELL_NUMBER + tagUid, clickCount + "",
+                        24, TimeUnit.HOURS);
+            }
+        }
+        QueryWrapper<Blog> queryWrapper = new QueryWrapper<>();
+//        Page<Blog> page = new Page<>();
+//        page.setCurrent(currentPage);
+//        page.setSize(pageSize);
+
+        queryWrapper.like(SQLConf.TAG_UID, tagUid);
+        queryWrapper.eq(SQLConf.STATUS, EStatus.ENABLE);
+        queryWrapper.eq(BaseSQLConf.IS_PUBLISH, EPublish.PUBLISH);
+        queryWrapper.orderByDesc(SQLConf.CREATE_TIME);
+        queryWrapper.select(Blog.class, i -> !i.getProperty().equals(SysConf.CONTENT));
+        IPage<Blog> pageList = blogService.page(new Page<>(currentPage,pageSize), queryWrapper);
+        List<Blog> list = pageList.getRecords();
+        list = blogService.setTagAndSortAndPictureByBlogList(list);
+        pageList.setRecords(list);
+        return pageList;
     }
 
     @Override
