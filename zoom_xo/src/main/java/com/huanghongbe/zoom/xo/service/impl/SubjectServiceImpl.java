@@ -2,6 +2,7 @@ package com.huanghongbe.zoom.xo.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.huanghongbe.zoom.base.enums.EStatus;
 import com.huanghongbe.zoom.base.global.BaseSQLConf;
 import com.huanghongbe.zoom.base.global.BaseSysConf;
@@ -9,19 +10,19 @@ import com.huanghongbe.zoom.base.service.impl.SuperServiceImpl;
 import com.huanghongbe.zoom.commons.entity.Subject;
 import com.huanghongbe.zoom.commons.entity.SubjectItem;
 import com.huanghongbe.zoom.utils.ResultUtil;
+import com.huanghongbe.zoom.utils.StringUtils;
 import com.huanghongbe.zoom.xo.enums.MessageConf;
+import com.huanghongbe.zoom.xo.enums.SysConf;
 import com.huanghongbe.zoom.xo.mapper.SubjectMapper;
 import com.huanghongbe.zoom.xo.service.SubjectItemService;
 import com.huanghongbe.zoom.xo.service.SubjectService;
+import com.huanghongbe.zoom.xo.utils.WebUtil;
 import com.huanghongbe.zoom.xo.vo.SubjectVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author ：huanghongbe
@@ -36,11 +37,50 @@ public class SubjectServiceImpl extends SuperServiceImpl<SubjectMapper, Subject>
     private SubjectItemService subjectItemService;
 //    @Resource
 //    private PictureFeignClient pictureFeignClient;
-//    @Autowired
-//    private WebUtil webUtil;
+    @Autowired
+    private WebUtil webUtil;
     @Override
     public IPage<Subject> getPageList(SubjectVO subjectVO) {
-        return null;
+        QueryWrapper<Subject> queryWrapper = new QueryWrapper<>();
+        if (StringUtils.isNotEmpty(subjectVO.getKeyword()) && !StringUtils.isEmpty(subjectVO.getKeyword().trim())) {
+            queryWrapper.like(BaseSQLConf.SUBJECT_NAME, subjectVO.getKeyword().trim());
+        }
+        Page<Subject> page = new Page<>();
+        page.setCurrent(subjectVO.getCurrentPage());
+        page.setSize(subjectVO.getPageSize());
+        queryWrapper.eq(BaseSQLConf.STATUS, EStatus.ENABLE);
+        queryWrapper.orderByDesc(BaseSQLConf.SORT);
+        IPage<Subject> pageList = subjectService.page(page, queryWrapper);
+        List<Subject> list = pageList.getRecords();
+
+        final StringBuffer fileUids = new StringBuffer();
+        list.forEach(item -> {
+            if (StringUtils.isNotEmpty(item.getFileUid())) {
+                fileUids.append(item.getFileUid() + BaseSysConf.FILE_SEGMENTATION);
+            }
+        });
+        String pictureResult = null;
+        Map<String, String> pictureMap = new HashMap<>();
+//        if (fileUids != null) {
+//            pictureResult = this.pictureFeignClient.getPicture(fileUids.toString(), BaseSysConf.FILE_SEGMENTATION);
+//        }
+        List<Map<String, Object>> picList = webUtil.getPictureMap(pictureResult);
+        picList.forEach(item -> {
+            pictureMap.put(item.get(SysConf.UID).toString(), item.get(SysConf.URL).toString());
+        });
+        for (Subject item : list) {
+            //获取图片
+            if (StringUtils.isNotEmpty(item.getFileUid())) {
+                List<String> pictureUidsTemp = StringUtils.changeStringToString(item.getFileUid(), BaseSysConf.FILE_SEGMENTATION);
+                List<String> pictureListTemp = new ArrayList<>();
+                pictureUidsTemp.forEach(picture -> {
+                    pictureListTemp.add(pictureMap.get(picture));
+                });
+                item.setPhotoList(pictureListTemp);
+            }
+        }
+        pageList.setRecords(list);
+        return pageList;
     }
 
     @Override
