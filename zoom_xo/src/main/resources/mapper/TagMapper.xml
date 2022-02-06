@@ -6,9 +6,9 @@
         <id column="uid" property="uid"/>
         <result column="content" property="content"/>
         <result column="status" property="status"/>
-        <result column="createtime" property="createtime"/>
-        <result column="updatetime" property="updatetime"/>
-        <result column="clickcount" property="clickcount"/>
+        <result column="createtime" property="createTime"/>
+        <result column="updatetime" property="updateTime"/>
+        <result column="clickcount" property="clickCount"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->

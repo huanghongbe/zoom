@@ -2,25 +2,25 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.huanghongbe.zoom.xo.mapper.BlogMapper">
 
-    <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.huanghongbe.zoom.commons.entity.Blog">
-        <id column="oid" property="oid"/>
-        <result column="uid" property="uid"/>
-        <result column="title" property="title"/>
-        <result column="summary" property="summary"/>
-        <result column="content" property="content"/>
-        <result column="taguid" property="taguid"/>
-        <result column="clickcount" property="clickcount"/>
-        <result column="collectcount" property="collectcount"/>
-        <result column="photo" property="photo"/>
-        <result column="status" property="status"/>
-        <result column="createtime" property="createtime"/>
-        <result column="updatetime" property="updatetime"/>
-    </resultMap>
+<!--    &lt;!&ndash; 通用查询映射结果 &ndash;&gt;-->
+<!--    <resultMap id="BaseResultMap" type="com.huanghongbe.zoom.commons.entity.Blog">-->
+<!--        <id column="oid" property="oid"/>-->
+<!--        <result column="uid" property="uid"/>-->
+<!--        <result column="title" property="title"/>-->
+<!--        <result column="summary" property="summary"/>-->
+<!--        <result column="content" property="content"/>-->
+<!--        <result column="taguid" property="tagUid"/>-->
+<!--        <result column="clickcount" property="clickCount"/>-->
+<!--        <result column="collectcount" property="collectCount"/>-->
+<!--        <result column="photo" property="photo"/>-->
+<!--        <result column="status" property="status"/>-->
+<!--        <result column="createtime" property="createTime"/>-->
+<!--        <result column="updatetime" property="updateTime"/>-->
+<!--    </resultMap>-->
 
-    <!-- 通用查询结果列 -->
-    <sql id="Base_Column_List">
-        oid, uid, title, summary, content, taguid, clickcount, collectcount, photo, status, createtime, updatetime
-    </sql>
+<!--    &lt;!&ndash; 通用查询结果列 &ndash;&gt;-->
+<!--    <sql id="Base_Column_List">-->
+<!--        oid, uid, title, summary, content, taguid, clickcount, collectcount, photo, status, createtime, updatetime-->
+<!--    </sql>-->
 
 </mapper>

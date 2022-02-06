@@ -5,7 +5,7 @@
     <resultMap id="BaseResultMap" type="com.huanghongbe.zoom.commons.entity.Admin">
         <id column="uid" property="uid"/>
         <result column="userName" property="userName"/>
-        <result column="password" property="password"/>
+        <result column="password" property="passWord"/>
         <result column="gender" property="gender"/>
         <result column="avatar" property="avatar"/>
         <result column="email" property="email"/>
