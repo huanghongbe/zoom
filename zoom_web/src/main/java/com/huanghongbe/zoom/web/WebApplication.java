@@ -15,6 +15,7 @@ import java.util.TimeZone;
  * @date ：2022-01-13 23:53
  */
 @SpringBootApplication(exclude = {SecurityAutoConfiguration.class, ManagementWebSecurityAutoConfiguration.class})
+//@SpringBootApplication
 @ComponentScan(basePackages = {
         "com.huanghongbe.zoom.commons.config",
 //        "com.huanghongbe.zoom.commons.fallback",

@@ -718,16 +718,16 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
             log.error(MessageConf.PLEASE_CONFIGURE_SYSTEM_PARAMS);
         }
 
-//        // 判断Redis中是否缓存了第一页的内容
-//        if (currentPage == 1L) {
-//            //从Redis中获取内容
-//            String jsonResult = redisUtil.get(RedisConf.NEW_BLOG);
-//            //判断redis中是否有文章
-//            if (StringUtils.isNotEmpty(jsonResult)) {
-//                IPage pageList = JsonUtils.jsonToPojo(jsonResult, Page.class);
-//                return pageList;
-//            }
-//        }
+        // 判断Redis中是否缓存了第一页的内容
+        if (currentPage == 1L) {
+            //从Redis中获取内容
+            String jsonResult = redisUtil.get(RedisConf.NEW_BLOG);
+            //判断redis中是否有文章
+            if (StringUtils.isNotEmpty(jsonResult)) {
+                IPage pageList = JsonUtils.jsonToPojo(jsonResult, Page.class);
+                return pageList;
+            }
+        }
 
         QueryWrapper<Blog> queryWrapper = new QueryWrapper<>();
         Page<Blog> page = new Page<>();
@@ -751,9 +751,9 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
         pageList.setRecords(list);
 
         //将从最新博客缓存到redis中
-//        if (currentPage == 1L) {
-//            redisUtil.setEx(RedisConf.NEW_BLOG, JsonUtils.objectToJson(pageList), 1, TimeUnit.HOURS);
-//        }
+        if (currentPage == 1L) {
+            redisUtil.setEx(RedisConf.NEW_BLOG, JsonUtils.objectToJson(pageList), 1, TimeUnit.HOURS);
+        }
         return pageList;
     }
 
@@ -784,17 +784,17 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
     @Override
     public IPage<Blog> getBlogByTime(Long currentPage, Long pageSize) {
         QueryWrapper<Blog> queryWrapper=new QueryWrapper<>();
-        IPage<Blog> page=new Page<>();
-        page.setCurrent(currentPage);
-        page.setSize(pageSize);
+//        IPage<Blog> page=new Page<>();
+//        page.setCurrent(currentPage);
+//        page.setSize(pageSize);
         queryWrapper.eq(SQLConf.STATUS,EStatus.ENABLE);
         queryWrapper.eq(SQLConf.IS_PUBLISH,EPublish.PUBLISH);
         queryWrapper.orderByDesc(SQLConf.CREATE_TIME);
         queryWrapper.select(Blog.class,i->!i.getProperty().equals(SQLConf.CONTENT));
-        IPage<Blog> pageList=blogService.page(page,queryWrapper);
-        /**
-         * 设置博客的分类标签和内容
-         */
+        IPage<Blog> pageList=blogService.page(new Page<>(currentPage,pageSize),queryWrapper);
+        List<Blog> list = pageList.getRecords();
+        list = setBlog(list);
+        pageList.setRecords(list);
         return pageList;
     }
 
@@ -858,9 +858,9 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
     @Override
     public IPage<Blog> getListByBlogSortUid(String blogSortUid, Long currentPage, Long pageSize) {
         //分页
-        Page<Blog> page = new Page<>();
-        page.setCurrent(currentPage);
-        page.setSize(pageSize);
+//        Page<Blog> page = new Page<>();
+//        page.setCurrent(currentPage);
+//        page.setSize(pageSize);
         QueryWrapper<Blog> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(SQLConf.STATUS, EStatus.ENABLE);
         queryWrapper.orderByDesc(SQLConf.CREATE_TIME);
@@ -868,7 +868,7 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
         queryWrapper.eq(SQLConf.BLOG_SORT_UID, blogSortUid);
         //因为首页并不需要显示内容，所以需要排除掉内容字段
         queryWrapper.select(Blog.class, i -> !i.getProperty().equals(SQLConf.CONTENT));
-        IPage<Blog> pageList = blogService.page(page, queryWrapper);
+        IPage<Blog> pageList = blogService.page(new Page<>(currentPage,pageSize), queryWrapper);
         //给博客增加标签和分类
         List<Blog> list = blogService.setTagAndSortAndPictureByBlogList(pageList.getRecords());
         pageList.setRecords(list);
@@ -1055,9 +1055,9 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
         });
         String pictureList = null;
 
-//        if (fileUids != null) {
-//            pictureList = this.pictureFeignClient.getPicture(fileUids.toString(), SysConf.FILE_SEGMENTATION);
-//        }
+        if (fileUids != null) {
+            pictureList = this.pictureFeignClient.getPicture(fileUids.toString(), SysConf.FILE_SEGMENTATION);
+        }
         List<Map<String, Object>> picList = webUtil.getPictureMap(pictureList);
         Collection<BlogSort> sortList = new ArrayList<>();
         Collection<Tag> tagList = new ArrayList<>();

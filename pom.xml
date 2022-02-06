@@ -64,6 +64,7 @@
         <module>zoom_commons</module>
         <module>zoom_web</module>
         <module>zoom_picture</module>
+        <module>zoom_gateway</module>
     </modules>
 
     <dependencyManagement>
