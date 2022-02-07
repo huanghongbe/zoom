@@ -53,8 +53,8 @@ public class BlogContentRestApi {
     private String ORIGINAL_TEMPLATE;
     @Value(value = "${BLOG.REPRINTED_TEMPLATE}")
     private String REPRINTED_TEMPLATE;
-    @RequestMapping("/getBlogById")
-    public String getBlogById(@RequestParam(value = "uid",required = false) String uid,
+    @RequestMapping("/getBlogByUid")
+    public String getBlogByUid(@RequestParam(value = "uid",required = false) String uid,
                               @RequestParam(value = "oid",required = false,defaultValue = "0") Integer oid){
         HttpServletRequest request = RequestHolder.getRequest();
         String ip = IpUtils.getIpAddr(request);
