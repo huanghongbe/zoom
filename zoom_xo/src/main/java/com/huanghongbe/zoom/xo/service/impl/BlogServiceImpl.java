@@ -7,6 +7,7 @@ import com.huanghongbe.zoom.base.enums.*;
 import com.huanghongbe.zoom.base.global.BaseSQLConf;
 import com.huanghongbe.zoom.base.global.BaseSysConf;
 import com.huanghongbe.zoom.base.global.Constants;
+import com.huanghongbe.zoom.base.holder.RequestHolder;
 import com.huanghongbe.zoom.base.service.impl.SuperServiceImpl;
 import com.huanghongbe.zoom.commons.entity.Blog;
 import com.huanghongbe.zoom.commons.entity.BlogSort;
@@ -877,7 +878,90 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
 
     @Override
     public Map<String, Object> getBlogByKeyword(String keywords, Long currentPage, Long pageSize) {
-        return null;
+        final String keyword = keywords.trim();
+        QueryWrapper<Blog> queryWrapper = new QueryWrapper<>();
+        queryWrapper.and(wrapper -> wrapper.like(SQLConf.TITLE, keyword).or().like(SQLConf.SUMMARY, keyword));
+        queryWrapper.eq(SQLConf.STATUS, EStatus.ENABLE);
+        queryWrapper.eq(SQLConf.IS_PUBLISH, EPublish.PUBLISH);
+        queryWrapper.select(Blog.class, i -> !i.getProperty().equals(SQLConf.CONTENT));
+        queryWrapper.orderByDesc(SQLConf.CLICK_COUNT);
+        Page<Blog> page = new Page<>();
+        page.setCurrent(currentPage);
+        page.setSize(pageSize);
+
+        IPage<Blog> iPage = blogService.page(page, queryWrapper);
+        List<Blog> blogList = iPage.getRecords();
+        List<String> blogSortUidList = new ArrayList<>();
+        Map<String, String> pictureMap = new HashMap<>();
+        final StringBuffer fileUids = new StringBuffer();
+        blogList.forEach(item -> {
+            // 获取图片uid
+            blogSortUidList.add(item.getBlogSortUid());
+            if (StringUtils.isNotEmpty(item.getFileUid())) {
+                fileUids.append(item.getFileUid() + SysConf.FILE_SEGMENTATION);
+            }
+            // 给标题和简介设置高亮
+            item.setTitle(getHitCode(item.getTitle(), keyword));
+            item.setSummary(getHitCode(item.getSummary(), keyword));
+
+        });
+
+        // 调用图片接口，获取图片
+        String pictureList = null;
+        if (fileUids != null) {
+            pictureList = this.pictureFeignClient.getPicture(fileUids.toString(), SysConf.FILE_SEGMENTATION);
+        }
+        List<Map<String, Object>> picList = webUtil.getPictureMap(pictureList);
+
+        picList.forEach(item -> {
+            pictureMap.put(item.get(SQLConf.UID).toString(), item.get(SQLConf.URL).toString());
+        });
+
+        Collection<BlogSort> blogSortList = new ArrayList<>();
+        if (blogSortUidList.size() > 0) {
+            blogSortList = blogSortService.listByIds(blogSortUidList);
+        }
+
+        Map<String, String> blogSortMap = new HashMap<>();
+        blogSortList.forEach(item -> {
+            blogSortMap.put(item.getUid(), item.getSortName());
+        });
+
+        // 设置分类名 和 图片
+        blogList.forEach(item -> {
+            if (blogSortMap.get(item.getBlogSortUid()) != null) {
+                item.setBlogSortName(blogSortMap.get(item.getBlogSortUid()));
+            }
+
+            //获取图片
+            if (StringUtils.isNotEmpty(item.getFileUid())) {
+                List<String> pictureUidsTemp = StringUtils.changeStringToString(item.getFileUid(), SysConf.FILE_SEGMENTATION);
+                List<String> pictureListTemp = new ArrayList<>();
+
+                pictureUidsTemp.forEach(picture -> {
+                    pictureListTemp.add(pictureMap.get(picture));
+                });
+                // 只设置一张标题图
+                if (pictureListTemp.size() > 0) {
+                    item.setPhotoUrl(pictureListTemp.get(0));
+                } else {
+                    item.setPhotoUrl("");
+                }
+            }
+        });
+
+        Map<String, Object> map = new HashMap<>();
+        // 返回总记录数
+        map.put(SysConf.TOTAL, iPage.getTotal());
+        // 返回总页数
+        map.put(SysConf.TOTAL_PAGE, iPage.getPages());
+        // 返回当前页大小
+        map.put(SysConf.PAGE_SIZE, pageSize);
+        // 返回当前页
+        map.put(SysConf.CURRENT_PAGE, iPage.getCurrent());
+        // 返回数据
+        map.put(SysConf.BLOG_LIST, blogList);
+        return map;
     }
 
     @Override
@@ -917,21 +1001,53 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
 
     @Override
     public IPage<Blog> searchBlogByBlogSort(String blogSortUid, Long currentPage, Long pageSize) {
-        return null;
+        BlogSort blogSort = blogSortService.getById(blogSortUid);
+        if (blogSort != null) {
+            HttpServletRequest request = RequestHolder.getRequest();
+            String ip = IpUtils.getIpAddr(request);
+
+            //从Redis取出数据，判断该用户24小时内，是否点击过该分类
+            String jsonResult = redisUtil.get(RedisConf.TAG_CLICK + RedisConf.SEGMENTATION + ip + RedisConf.WELL_NUMBER + blogSortUid);
+            if (StringUtils.isEmpty(jsonResult)) {
+                //给标签点击数增加
+                int clickCount = blogSort.getClickCount() + 1;
+                blogSort.setClickCount(clickCount);
+                blogSort.updateById();
+                //将该用户点击记录存储到redis中, 24小时后过期
+                redisUtil.setEx(RedisConf.TAG_CLICK + RedisConf.SEGMENTATION + ip + RedisConf.WELL_NUMBER + blogSortUid, clickCount + "",
+                        24, TimeUnit.HOURS);
+            }
+        }
+
+        QueryWrapper<Blog> queryWrapper = new QueryWrapper<>();
+        Page<Blog> page = new Page<>();
+        page.setCurrent(currentPage);
+        page.setSize(pageSize);
+        queryWrapper.eq(SQLConf.BLOG_SORT_UID, blogSortUid);
+        queryWrapper.orderByDesc(SQLConf.CREATE_TIME);
+        queryWrapper.eq(BaseSQLConf.IS_PUBLISH, EPublish.PUBLISH);
+        queryWrapper.eq(BaseSQLConf.STATUS, EStatus.ENABLE);
+        // 排除博客详情
+        queryWrapper.select(Blog.class, i -> !i.getProperty().equals(SysConf.CONTENT));
+        IPage<Blog> pageList = blogService.page(page, queryWrapper);
+        List<Blog> list = pageList.getRecords();
+        list = blogService.setTagAndSortAndPictureByBlogList(list);
+        pageList.setRecords(list);
+        return pageList;
     }
 
     @Override
     public IPage<Blog> searchBlogByAuthor(String author, Long currentPage, Long pageSize) {
         QueryWrapper<Blog> queryWrapper = new QueryWrapper<>();
-        Page<Blog> page = new Page<>();
-        page.setCurrent(currentPage);
-        page.setSize(pageSize);
+//        Page<Blog> page = new Page<>();
+//        page.setCurrent(currentPage);
+//        page.setSize(pageSize);
         queryWrapper.eq(SQLConf.AUTHOR, author);
         queryWrapper.eq(BaseSQLConf.IS_PUBLISH, EPublish.PUBLISH);
         queryWrapper.eq(BaseSQLConf.STATUS, EStatus.ENABLE);
         queryWrapper.orderByDesc(SQLConf.CREATE_TIME);
         queryWrapper.select(Blog.class, i -> !i.getProperty().equals(SysConf.CONTENT));
-        IPage<Blog> pageList = blogService.page(page, queryWrapper);
+        IPage<Blog> pageList = blogService.page(new Page<>(currentPage,pageSize), queryWrapper);
         List<Blog> list = pageList.getRecords();
         list = blogService.setTagAndSortAndPictureByBlogList(list);
         pageList.setRecords(list);
@@ -1119,4 +1235,75 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
         return list;
     }
 
+    /**
+     * 添加高亮
+     *
+     * @param str
+     * @param keyword
+     * @return
+     */
+    private String getHitCode(String str, String keyword) {
+        if (StringUtils.isEmpty(keyword) || StringUtils.isEmpty(str)) {
+            return str;
+        }
+        String startStr = "<span style = 'color:red'>";
+        String endStr = "</span>";
+        // 判断关键字是否直接是搜索的内容，否者直接返回
+        if (str.equals(keyword)) {
+            return startStr + str + endStr;
+        }
+        String lowerCaseStr = str.toLowerCase();
+        String lowerKeyword = keyword.toLowerCase();
+        String[] lowerCaseArray = lowerCaseStr.split(lowerKeyword);
+        Boolean isEndWith = lowerCaseStr.endsWith(lowerKeyword);
+
+        // 计算分割后的字符串位置
+        Integer count = 0;
+        List<Map<String, Integer>> list = new ArrayList<>();
+        List<Map<String, Integer>> keyList = new ArrayList<>();
+        for (int a = 0; a < lowerCaseArray.length; a++) {
+            // 将切割出来的存储map
+            Map<String, Integer> map = new HashMap<>();
+            Map<String, Integer> keyMap = new HashMap<>();
+            map.put("startIndex", count);
+            Integer len = lowerCaseArray[a].length();
+            count += len;
+            map.put("endIndex", count);
+            list.add(map);
+            if (a < lowerCaseArray.length - 1 || isEndWith) {
+                // 将keyword存储map
+                keyMap.put("startIndex", count);
+                count += keyword.length();
+                keyMap.put("endIndex", count);
+                keyList.add(keyMap);
+            }
+        }
+        // 截取切割对象
+        List<String> arrayList = new ArrayList<>();
+        for (Map<String, Integer> item : list) {
+            Integer start = item.get("startIndex");
+            Integer end = item.get("endIndex");
+            String itemStr = str.substring(start, end);
+            arrayList.add(itemStr);
+        }
+        // 截取关键字
+        List<String> keyArrayList = new ArrayList<>();
+        for (Map<String, Integer> item : keyList) {
+            Integer start = item.get("startIndex");
+            Integer end = item.get("endIndex");
+            String itemStr = str.substring(start, end);
+            keyArrayList.add(itemStr);
+        }
+
+        StringBuffer sb = new StringBuffer();
+        for (int a = 0; a < arrayList.size(); a++) {
+            sb.append(arrayList.get(a));
+            if (a < arrayList.size() - 1 || isEndWith) {
+                sb.append(startStr);
+                sb.append(keyArrayList.get(a));
+                sb.append(endStr);
+            }
+        }
+        return sb.toString();
+    }
 }
