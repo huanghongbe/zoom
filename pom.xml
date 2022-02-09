@@ -65,6 +65,7 @@
         <module>zoom_web</module>
         <module>zoom_picture</module>
         <module>zoom_gateway</module>
+        <module>zoom_sms</module>
     </modules>
 
     <dependencyManagement>

@@ -1,6 +1,5 @@
 server:
   port: 8603
-
 spring:
   application:
     name: zoom-web
