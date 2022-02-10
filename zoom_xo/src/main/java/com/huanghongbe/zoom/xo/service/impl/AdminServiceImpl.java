@@ -14,6 +14,7 @@ import com.huanghongbe.zoom.xo.vo.AdminVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -28,7 +29,7 @@ public class AdminServiceImpl extends SuperServiceImpl<AdminMapper, Admin> imple
     private WebUtil webUtil;
     @Autowired
     private AdminService adminService;
-    @Autowired
+    @Resource
     private PictureFeignClient pictureFeignClient;
 
     @Override
