@@ -25,9 +25,9 @@ import java.util.TimeZone;
 @EnableTransactionManagement
 @SpringBootApplication
 @EnableOpenApi
-@EnableDiscoveryClient
+//@EnableDiscoveryClient
 @EnableAsync
-@EnableFeignClients("com.huanghongbe.zoom.commons.feign")
+//@EnableFeignClients("com.huanghongbe.zoom.commons.feign")
 @ComponentScan(basePackages = {
         "com.huanghongbe.zoom.commons.config",
 //        "com.huanghongbe.zoom.commons.fallback",

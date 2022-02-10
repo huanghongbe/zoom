@@ -7,6 +7,7 @@ import com.huanghongbe.zoom.commons.config.jwt.Audience;
 import com.huanghongbe.zoom.commons.config.jwt.JwtTokenUtil;
 import com.huanghongbe.zoom.commons.entity.Admin;
 import com.huanghongbe.zoom.commons.entity.Role;
+import com.huanghongbe.zoom.commons.feign.PictureFeignClient;
 import com.huanghongbe.zoom.utils.*;
 import com.huanghongbe.zoom.xo.enums.MessageConf;
 import com.huanghongbe.zoom.xo.enums.RedisConf;
@@ -14,17 +15,18 @@ import com.huanghongbe.zoom.xo.enums.SQLConf;
 import com.huanghongbe.zoom.xo.enums.SysConf;
 import com.huanghongbe.zoom.xo.service.AdminService;
 import com.huanghongbe.zoom.xo.service.RoleService;
+import com.huanghongbe.zoom.xo.service.WebConfigService;
+import com.huanghongbe.zoom.xo.utils.WebUtil;
+import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -45,7 +47,13 @@ public class LoginRestApi {
     @Autowired
     private RoleService roleService;
     @Autowired
+    private WebConfigService webConfigService;
+    @Autowired
     private RedisUtil redisUtil;
+    @Resource
+    private PictureFeignClient pictureFeignClient;
+    @Autowired
+    private WebUtil webUtil;
     @Value(value = "${tokenHead}")
     private String tokenHead;
     @Value(value = "${isRememberMeExpiresSecond}")
@@ -103,7 +111,7 @@ public class LoginRestApi {
         if (roles.size() <= 0) {
             return ResultUtil.result(SysConf.ERROR, MessageConf.NO_ROLE);
         }
-        StringBuilder roleNames = null;
+        StringBuilder roleNames = new StringBuilder();
         for (Role role : roles) {
             roleNames.append(role.getRoleName()).append(Constants.SYMBOL_COMMA);
         }
@@ -125,7 +133,8 @@ public class LoginRestApi {
         admin.setLoginCount(count);
         admin.setLastLoginIp(IpUtils.getIpAddr(request));
         admin.setLastLoginTime(new Date());
-        admin.updateById();
+        //admin.updateById();
+        adminService.updateById(admin);
         // 设置token到validCode，用于记录登录用户
         admin.setValidCode(token);
         // 设置tokenUid，【主要用于换取token令牌，防止token直接暴露到在线用户管理中】
@@ -134,6 +143,33 @@ public class LoginRestApi {
         // 添加在线用户到Redis中【设置过期时间】
         adminService.addOnlineAdmin(admin, expiration);
         return ResultUtil.result(SysConf.SUCCESS, result);
+    }
+
+    @GetMapping(value = "/info")
+    public String info(HttpServletRequest request, @RequestParam(name = "token", required = false) String token) {
+
+        Map<String, Object> map = new HashMap<>(Constants.NUM_THREE);
+        if (request.getAttribute(SysConf.ADMIN_UID) == null) {
+            return ResultUtil.result(SysConf.ERROR, "token用户过期");
+        }
+        Admin admin = adminService.getById(request.getAttribute(SysConf.ADMIN_UID).toString());
+        map.put(SysConf.TOKEN, token);
+        //获取图片
+        if (StringUtils.isNotEmpty(admin.getAvatar())) {
+            String pictureList = this.pictureFeignClient.getPicture(admin.getAvatar(), SysConf.FILE_SEGMENTATION);
+            List<String> list = webUtil.getPicture(pictureList);
+            if (list.size() > 0) {
+                map.put(SysConf.AVATAR, list.get(0));
+            } else {
+                map.put(SysConf.AVATAR, "https://gitee.com/moxi159753/wx_picture/raw/master/picture/favicon.png");
+            }
+        }
+
+        List<String> roleUid = new ArrayList<>();
+        roleUid.add(admin.getRoleUid());
+        Collection<Role> roleList = roleService.listByIds(roleUid);
+        map.put(SysConf.ROLES, roleList);
+        return ResultUtil.result(SysConf.SUCCESS, map);
     }
 
     /**
@@ -155,5 +191,10 @@ public class LoginRestApi {
             redisUtil.setEx(RedisConf.LOGIN_LIMIT + RedisConf.SEGMENTATION + ip, Constants.STR_ONE, 30, TimeUnit.MINUTES);
         }
         return surplusCount;
+    }
+
+    @GetMapping(value = "/getWebSiteName")
+    public String getWebSiteName() {
+        return ResultUtil.successWithData(webConfigService.getWebSiteName());
     }
 }

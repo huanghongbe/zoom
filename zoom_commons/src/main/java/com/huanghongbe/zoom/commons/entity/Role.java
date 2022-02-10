@@ -11,8 +11,6 @@ import lombok.Data;
  * 角色信息表
  * </p>
  *
- * @author limbo
- * @since 2018-09-30
  */
 @Data
 @TableName("t_role")

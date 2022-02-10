@@ -14,6 +14,7 @@ import com.huanghongbe.zoom.utils.StringUtils;
 import com.huanghongbe.zoom.xo.enums.MessageConf;
 import com.huanghongbe.zoom.xo.enums.RedisConf;
 import com.huanghongbe.zoom.xo.enums.SQLConf;
+import com.huanghongbe.zoom.xo.enums.SysConf;
 import com.huanghongbe.zoom.xo.mapper.WebConfigMapper;
 import com.huanghongbe.zoom.xo.service.WebConfigService;
 import com.huanghongbe.zoom.xo.utils.WebUtil;
@@ -21,6 +22,7 @@ import com.huanghongbe.zoom.xo.vo.WebConfigVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +42,7 @@ public class WebConfigServiceImpl extends SuperServiceImpl<WebConfigMapper, WebC
     private WebConfigService webConfigService;
     @Autowired
     private WebUtil webUtil;
-    @Autowired
+    @Resource
     private PictureFeignClient pictureFeignClient;
     @Override
     public WebConfig getWebConfig() {
@@ -49,7 +51,13 @@ public class WebConfigServiceImpl extends SuperServiceImpl<WebConfigMapper, WebC
 
     @Override
     public String getWebSiteName() {
-        return null;
+        QueryWrapper<WebConfig> queryWrapper = new QueryWrapper<>();
+        queryWrapper.last(SysConf.LIMIT_ONE);
+        WebConfig webConfig = webConfigService.getOne(queryWrapper);
+        if (StringUtils.isNotEmpty(webConfig.getName())) {
+            return webConfig.getName();
+        }
+        return "";
     }
 
     @Override
