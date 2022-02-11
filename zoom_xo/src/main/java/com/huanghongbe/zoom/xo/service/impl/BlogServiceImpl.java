@@ -261,10 +261,9 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
             ArrayList jsonList = JsonUtils.jsonArrayToArrayList(jsonArrayList);
             return jsonList;
         }
-
         List<Map<String, Object>> blogCoutByTagMap = blogMapper.getBlogCountByTag();
         Map<String, Integer> tagMap = new HashMap<>();
-        for (Map<String, Object> item : blogCoutByTagMap) {
+        blogCoutByTagMap.forEach(item->{
             String tagUid = String.valueOf(item.get(SQLConf.TAG_UID));
             // java.lang.Number是Integer,Long的父类
             Number num = (Number) item.get(SysConf.COUNT);
@@ -282,18 +281,17 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
                 //如果长度大于32，说明含有多个UID
                 if (StringUtils.isNotEmpty(tagUid)) {
                     List<String> strList = StringUtils.changeStringToString(tagUid, ",");
-                    for (String strItem : strList) {
+                    strList.forEach(strItem->{
                         if (tagMap.get(strItem) == null) {
                             tagMap.put(strItem, count);
                         } else {
                             Integer tempCount = tagMap.get(strItem) + count;
                             tagMap.put(strItem, tempCount);
                         }
-                    }
+                    });
                 }
             }
-        }
-
+        });
         //把查询到的Tag放到Map中
         Set<String> tagUids = tagMap.keySet();
         Collection<Tag> tagCollection = new ArrayList<>();
@@ -302,14 +300,13 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
         }
 
         Map<String, String> tagEntityMap = new HashMap<>();
-        for (Tag tag : tagCollection) {
+        tagCollection.forEach(tag -> {
             if (StringUtils.isNotEmpty(tag.getContent())) {
                 tagEntityMap.put(tag.getUid(), tag.getContent());
             }
-        }
-
+        });
         List<Map<String, Object>> resultList = new ArrayList<>();
-        for (Map.Entry<String, Integer> entry : tagMap.entrySet()) {
+        tagMap.entrySet().forEach(entry->{
             String tagUid = entry.getKey();
             if (tagEntityMap.get(tagUid) != null) {
                 String tagName = tagEntityMap.get(tagUid);
@@ -320,7 +317,7 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
                 itemResultMap.put(SysConf.VALUE, count);
                 resultList.add(itemResultMap);
             }
-        }
+        });
         // 将 每个标签下文章数目 存入到Redis【过期时间2小时】
         if (resultList.size() > 0) {
             redisUtil.setEx(RedisConf.DASHBOARD + Constants.SYMBOL_COLON + RedisConf.BLOG_COUNT_BY_TAG, JsonUtils.objectToJson(resultList), 2, TimeUnit.HOURS);
@@ -404,12 +401,11 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
         List<Map<String, Object>> blogContributeMap = blogMapper.getBlogContributeCount(startTime, endTime);
         List<String> dateList = DateUtils.getDayBetweenDates(startTime, endTime);
         Map<String, Object> dateMap = new HashMap<>();
-        for (Map<String, Object> itemMap : blogContributeMap) {
+        blogContributeMap.forEach(itemMap->{
             dateMap.put(itemMap.get("DATE").toString(), itemMap.get("COUNT"));
-        }
-
+        });
         List<List<Object>> resultList = new ArrayList<>();
-        for (String item : dateList) {
+        dateList.forEach(item->{
             Integer count = 0;
             if (dateMap.get(item) != null) {
                 count = Integer.valueOf(dateMap.get(item).toString());
@@ -418,8 +414,7 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
             objectList.add(item);
             objectList.add(count);
             resultList.add(objectList);
-        }
-
+        });
         Map<String, Object> resultMap = new HashMap<>(Constants.NUM_TWO);
         List<String> contributeDateList = new ArrayList<>();
         contributeDateList.add(startTime);

@@ -1,30 +1,36 @@
 package com.huanghongbe.zoom.admin.restapi;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.huanghongbe.zoom.base.enums.EMenuType;
 import com.huanghongbe.zoom.base.enums.EStatus;
 import com.huanghongbe.zoom.base.global.Constants;
 import com.huanghongbe.zoom.commons.config.jwt.Audience;
 import com.huanghongbe.zoom.commons.config.jwt.JwtTokenUtil;
 import com.huanghongbe.zoom.commons.entity.Admin;
+import com.huanghongbe.zoom.commons.entity.CategoryMenu;
+import com.huanghongbe.zoom.commons.entity.OnlineAdmin;
 import com.huanghongbe.zoom.commons.entity.Role;
 import com.huanghongbe.zoom.commons.feign.PictureFeignClient;
 import com.huanghongbe.zoom.utils.*;
-import com.huanghongbe.zoom.xo.enums.MessageConf;
-import com.huanghongbe.zoom.xo.enums.RedisConf;
-import com.huanghongbe.zoom.xo.enums.SQLConf;
-import com.huanghongbe.zoom.xo.enums.SysConf;
+import com.huanghongbe.zoom.admin.enums.MessageConf;
+import com.huanghongbe.zoom.admin.enums.RedisConf;
+import com.huanghongbe.zoom.admin.enums.SQLConf;
+import com.huanghongbe.zoom.admin.enums.SysConf;
 import com.huanghongbe.zoom.xo.service.AdminService;
+import com.huanghongbe.zoom.xo.service.CategoryMenuService;
 import com.huanghongbe.zoom.xo.service.RoleService;
 import com.huanghongbe.zoom.xo.service.WebConfigService;
 import com.huanghongbe.zoom.xo.utils.WebUtil;
-import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -62,6 +68,8 @@ public class LoginRestApi {
     private JwtTokenUtil jwtTokenUtil;
     @Autowired
     private Audience audience;
+    @Autowired
+    private CategoryMenuService categoryMenuService;
     @PostMapping("/login")
     public String login(HttpServletRequest request,
                         @RequestParam(name = "username", required = false) String username,
@@ -172,6 +180,73 @@ public class LoginRestApi {
         return ResultUtil.result(SysConf.SUCCESS, map);
     }
 
+    @GetMapping(value = "/getMenu")
+    public String getMenu(HttpServletRequest request) {
+
+        Collection<CategoryMenu> categoryMenuList = new ArrayList<>();
+        Admin admin = adminService.getById(request.getAttribute(SysConf.ADMIN_UID).toString());
+
+        List<String> roleUid = new ArrayList<>();
+        roleUid.add(admin.getRoleUid());
+        Collection<Role> roleList = roleService.listByIds(roleUid);
+        List<String> categoryMenuUids = new ArrayList<>();
+        roleList.forEach(item -> {
+            String caetgoryMenuUids = item.getCategoryMenuUids();
+            String[] uids = caetgoryMenuUids.replace("[", "").replace("]", "").replace("\"", "").split(",");
+            categoryMenuUids.addAll(Arrays.asList(uids));
+        });
+        categoryMenuList = categoryMenuService.listByIds(categoryMenuUids);
+
+        // 从三级级分类中查询出 二级分类
+        List<CategoryMenu> buttonList = new ArrayList<>();
+        Set<String> secondMenuUidList = new HashSet<>();
+        categoryMenuList.forEach(item -> {
+            // 查询二级分类
+            if (item.getMenuType() == EMenuType.MENU && item.getMenuLevel() == SysConf.TWO) {
+                secondMenuUidList.add(item.getUid());
+            }
+            // 从三级分类中，得到二级分类
+            if (item.getMenuType() == EMenuType.BUTTON && StringUtils.isNotEmpty(item.getParentUid())) {
+                // 找出二级菜单
+                secondMenuUidList.add(item.getParentUid());
+                // 找出全部按钮
+                buttonList.add(item);
+            }
+        });
+
+        Collection<CategoryMenu> childCategoryMenuList = new ArrayList<>();
+        Collection<CategoryMenu> parentCategoryMenuList = new ArrayList<>();
+        List<String> parentCategoryMenuUids = new ArrayList<>();
+
+        if (secondMenuUidList.size() > 0) {
+            childCategoryMenuList = categoryMenuService.listByIds(secondMenuUidList);
+        }
+
+        childCategoryMenuList.forEach(item -> {
+            //选出所有的二级分类
+            if (item.getMenuLevel() == SysConf.TWO) {
+
+                if (StringUtils.isNotEmpty(item.getParentUid())) {
+                    parentCategoryMenuUids.add(item.getParentUid());
+                }
+            }
+        });
+
+        if (parentCategoryMenuUids.size() > 0) {
+            parentCategoryMenuList = categoryMenuService.listByIds(parentCategoryMenuUids);
+        }
+
+        List<CategoryMenu> list = new ArrayList<>(parentCategoryMenuList);
+
+        //对parent进行排序
+        Map<String, Object> map = new HashMap<>(Constants.NUM_THREE);
+        Collections.sort(list);
+        map.put(SysConf.PARENT_LIST, list);
+        map.put(SysConf.SON_LIST, childCategoryMenuList);
+        map.put(SysConf.BUTTON_LIST, buttonList);
+        return ResultUtil.result(SysConf.SUCCESS, map);
+    }
+
     /**
      * 设置登录限制，返回剩余次数
      * 密码错误五次，将会锁定30分钟
@@ -196,5 +271,28 @@ public class LoginRestApi {
     @GetMapping(value = "/getWebSiteName")
     public String getWebSiteName() {
         return ResultUtil.successWithData(webConfigService.getWebSiteName());
+    }
+
+    @PostMapping(value = "/logout")
+    public String logout() {
+        ServletRequestAttributes attribute = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest request = attribute.getRequest();
+        String token = request.getAttribute(SysConf.TOKEN).toString();
+        if (StringUtils.isEmpty(token)) {
+            return ResultUtil.result(SysConf.ERROR, MessageConf.OPERATION_FAIL);
+        } else {
+            // 获取在线用户信息
+            String adminJson = redisUtil.get(RedisConf.LOGIN_TOKEN_KEY + RedisConf.SEGMENTATION + token);
+            if (StringUtils.isNotEmpty(adminJson)) {
+                OnlineAdmin onlineAdmin = JsonUtils.jsonToPojo(adminJson, OnlineAdmin.class);
+                String tokenUid = onlineAdmin.getTokenId();
+                // 移除Redis中的TokenUid
+                redisUtil.delete(RedisConf.LOGIN_UUID_KEY + RedisConf.SEGMENTATION + tokenUid);
+            }
+            // 移除Redis中的用户
+            redisUtil.delete(RedisConf.LOGIN_TOKEN_KEY + RedisConf.SEGMENTATION + token);
+            SecurityContextHolder.clearContext();
+            return ResultUtil.result(SysConf.SUCCESS, MessageConf.OPERATION_SUCCESS);
+        }
     }
 }
