@@ -67,8 +67,10 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
     private BlogSortMapper blogSortMapper;
     @Autowired
     private SysParamsService sysParamsService;
-    @Autowired
+    @Resource
     private PictureFeignClient pictureFeignClient;
+//    @DubboReference
+//    private PictureService pictureService;
     @Override
     public List<Blog> setTagByBlogList(List<Blog> list) {
         List<Blog> notNullList=list.stream().filter(Objects::nonNull).collect(Collectors.toList());
@@ -116,6 +118,7 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
                 System.out.println(count%10);
                 if(count%10 == 0) {
                     pictureList = this.pictureFeignClient.getPicture(fileUids.toString(), ",");
+                    //pictureList=pictureService.getPicture(fileUid.toString(),",");
                     List<Map<String, Object>> tempPicList = webUtil.getPictureMap(pictureList);
                     picList.addAll(tempPicList);
                     fileUids = new StringBuffer();
@@ -125,6 +128,7 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
             // 判断是否存在图片需要获取
             if(fileUids.length() >= Constants.NUM_32) {
                 pictureList = this.pictureFeignClient.getPicture(fileUids.toString(), Constants.SYMBOL_COMMA);
+                //pictureList=pictureService.getPicture(fileUids.toString(), Constants.SYMBOL_COMMA);
                 List<Map<String, Object>> tempPicList = webUtil.getPictureMap(pictureList);
                 picList.addAll(tempPicList);
             }
@@ -905,6 +909,7 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
         String pictureList = null;
         if (fileUids != null) {
             pictureList = this.pictureFeignClient.getPicture(fileUids.toString(), SysConf.FILE_SEGMENTATION);
+            //pictureList = pictureService.getPicture(fileUids.toString(), SysConf.FILE_SEGMENTATION);
         }
         List<Map<String, Object>> picList = webUtil.getPictureMap(pictureList);
 
@@ -1168,6 +1173,7 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
 
         if (fileUids != null) {
             pictureList = this.pictureFeignClient.getPicture(fileUids.toString(), SysConf.FILE_SEGMENTATION);
+            //pictureList = pictureService.getPicture(fileUids.toString(), SysConf.FILE_SEGMENTATION);
         }
         List<Map<String, Object>> picList = webUtil.getPictureMap(pictureList);
         Collection<BlogSort> sortList = new ArrayList<>();

@@ -19,6 +19,15 @@
 
 
     <dependencies>
+
+<!--        &lt;!&ndash; https://mvnrepository.com/artifact/org.apache.dubbo/dubbo-spring-boot-starter &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.dubbo</groupId>-->
+<!--            <artifactId>dubbo-spring-boot-starter</artifactId>-->
+<!--            <version>2.7.8</version>-->
+<!--        </dependency>-->
+
+
         <dependency>
             <artifactId>zoom_xo</artifactId>
             <groupId>com.haunghongbe</groupId>
@@ -114,6 +123,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>2.2.2.RELEASE</version>
                 <configuration>
                     <!-- 指定该Main Class为全局的唯一入口 -->
                     <mainClass>com.huanghongbe.zoom.web.WebApplication</mainClass>

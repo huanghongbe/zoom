@@ -18,6 +18,8 @@
 
 
     <dependencies>
+
+
         <!-- https://mvnrepository.com/artifact/com.dyuproject.protostuff/protostuff-core -->
         <!-- 序列化相关-->
         <dependency>

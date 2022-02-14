@@ -13,9 +13,8 @@ import java.util.List;
 /**
  * zoom_picture相关接口
  *
- * @author 陌溪
  */
-@FeignClient(name = "mogu-picture", configuration = FeignConfiguration.class, fallback = PictureFeignFallback.class)
+@FeignClient(name = "zoom-picture", configuration = FeignConfiguration.class, fallback = PictureFeignFallback.class)
 public interface PictureFeignClient {
 
     /**

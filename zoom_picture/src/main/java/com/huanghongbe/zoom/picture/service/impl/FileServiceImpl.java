@@ -26,6 +26,7 @@ import java.util.*;
  * @date ：2022-02-04 4:59
  */
 @Service
+//@DubboService
 public class FileServiceImpl extends SuperServiceImpl<FileMapper, File> implements FileService {
     @Autowired
     private FileService fileService;

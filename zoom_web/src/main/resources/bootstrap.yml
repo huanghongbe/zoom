@@ -17,7 +17,13 @@ spring:
         group: dev
         #指定命名空间
         namespace: dev
-
+#dubbo:
+#  application:
+#    name: dubbo-picture-consumer
+#  registry:
+#    address: nacos://localhost:8848
+#    protocol: nacos
+#    group: dubbo
 #    # 配置Sentinel流控
 #    sentinel:
 #      transport:

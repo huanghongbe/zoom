@@ -20,6 +20,7 @@ import springfox.documentation.oas.annotations.EnableOpenApi;
         "com.huanghongbe.zoom.commons.config.redis",
         "com.huanghongbe.zoom.utils",
         "com.huanghongbe.zoom.picture"})
+//@EnableDubbo
 public class PictureApplication {
 
     public static void main(String[] args) {
