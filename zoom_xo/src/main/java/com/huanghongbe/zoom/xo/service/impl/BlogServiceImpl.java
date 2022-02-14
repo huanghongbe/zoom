@@ -469,7 +469,127 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
 
     @Override
     public IPage<Blog> getPageList(BlogVO blogVO) {
-        return null;
+        QueryWrapper<Blog> queryWrapper = new QueryWrapper<>();
+        // 构建搜索条件
+        if (StringUtils.isNotEmpty(blogVO.getKeyword()) && !StringUtils.isEmpty(blogVO.getKeyword().trim())) {
+            queryWrapper.like(SQLConf.TITLE, blogVO.getKeyword().trim());
+        }
+        if (!StringUtils.isEmpty(blogVO.getTagUid())) {
+            queryWrapper.like(SQLConf.TAG_UID, blogVO.getTagUid());
+        }
+        if (!StringUtils.isEmpty(blogVO.getBlogSortUid())) {
+            queryWrapper.like(SQLConf.BLOG_SORT_UID, blogVO.getBlogSortUid());
+        }
+        if (!StringUtils.isEmpty(blogVO.getLevelKeyword())) {
+            queryWrapper.eq(SQLConf.LEVEL, blogVO.getLevelKeyword());
+        }
+        if (!StringUtils.isEmpty(blogVO.getIsPublish())) {
+            queryWrapper.eq(SQLConf.IS_PUBLISH, blogVO.getIsPublish());
+        }
+        if (!StringUtils.isEmpty(blogVO.getIsOriginal())) {
+            queryWrapper.eq(SQLConf.IS_ORIGINAL, blogVO.getIsOriginal());
+        }
+        if(!StringUtils.isEmpty(blogVO.getType())) {
+            queryWrapper.eq(SQLConf.TYPE, blogVO.getType());
+        }
+        //分页
+        Page<Blog> page = new Page<>();
+        page.setCurrent(blogVO.getCurrentPage());
+        page.setSize(blogVO.getPageSize());
+        queryWrapper.eq(SQLConf.STATUS, EStatus.ENABLE);
+        if(StringUtils.isNotEmpty(blogVO.getOrderByAscColumn())) {
+            // 将驼峰转换成下划线
+            String column = StringUtils.underLine(new StringBuffer(blogVO.getOrderByAscColumn())).toString();
+            queryWrapper.orderByAsc(column);
+        }else if(StringUtils.isNotEmpty(blogVO.getOrderByDescColumn())) {
+            // 将驼峰转换成下划线
+            String column = StringUtils.underLine(new StringBuffer(blogVO.getOrderByDescColumn())).toString();
+            queryWrapper.orderByDesc(column);
+        } else {
+            // 是否启动排序字段
+            if (blogVO.getUseSort() == 0) {
+                // 未使用，默认按时间倒序
+                queryWrapper.orderByDesc(SQLConf.CREATE_TIME);
+            } else {
+                // 使用，默认按sort值大小倒序
+                queryWrapper.orderByDesc(SQLConf.SORT);
+            }
+        }
+        IPage<Blog> pageList = blogService.page(page, queryWrapper);
+        List<Blog> list = pageList.getRecords();
+        if (list.size() == 0) {
+            return pageList;
+        }
+        final StringBuffer fileUids = new StringBuffer();
+        List<String> sortUids = new ArrayList<>();
+        List<String> tagUids = new ArrayList<>();
+        list.forEach(item -> {
+            if (StringUtils.isNotEmpty(item.getFileUid())) {
+                fileUids.append(item.getFileUid() + SysConf.FILE_SEGMENTATION);
+            }
+            if (StringUtils.isNotEmpty(item.getBlogSortUid())) {
+                sortUids.add(item.getBlogSortUid());
+            }
+            if (StringUtils.isNotEmpty(item.getTagUid())) {
+                List<String> tagUidsTemp = StringUtils.changeStringToString(item.getTagUid(), SysConf.FILE_SEGMENTATION);
+                for (String itemTagUid : tagUidsTemp) {
+                    tagUids.add(itemTagUid);
+                }
+            }
+        });
+        String pictureList = null;
+        if (fileUids != null) {
+            pictureList = this.pictureFeignClient.getPicture(fileUids.toString(), SysConf.FILE_SEGMENTATION);
+        }
+        List<Map<String, Object>> picList = webUtil.getPictureMap(pictureList);
+        Collection<BlogSort> sortList = new ArrayList<>();
+        Collection<Tag> tagList = new ArrayList<>();
+        if (sortUids.size() > 0) {
+            sortList = blogSortService.listByIds(sortUids);
+        }
+        if (tagUids.size() > 0) {
+            tagList = tagService.listByIds(tagUids);
+        }
+        Map<String, BlogSort> sortMap = new HashMap<>();
+        Map<String, Tag> tagMap = new HashMap<>();
+        Map<String, String> pictureMap = new HashMap<>();
+        sortList.forEach(item -> {
+            sortMap.put(item.getUid(), item);
+        });
+        tagList.forEach(item -> {
+            tagMap.put(item.getUid(), item);
+        });
+        picList.forEach(item -> {
+            pictureMap.put(item.get(SQLConf.UID).toString(), item.get(SQLConf.URL).toString());
+        });
+        list.forEach(item->{
+            //设置分类
+            if (StringUtils.isNotEmpty(item.getBlogSortUid())) {
+                item.setBlogSort(sortMap.get(item.getBlogSortUid()));
+            }
+            //获取标签
+            if (StringUtils.isNotEmpty(item.getTagUid())) {
+                List<String> tagUidsTemp = StringUtils.changeStringToString(item.getTagUid(), SysConf.FILE_SEGMENTATION);
+                List<Tag> tagListTemp = new ArrayList<Tag>();
+
+                tagUidsTemp.forEach(tag -> {
+                    tagListTemp.add(tagMap.get(tag));
+                });
+                item.setTagList(tagListTemp);
+            }
+            //获取图片
+            if (StringUtils.isNotEmpty(item.getFileUid())) {
+                List<String> pictureUidsTemp = StringUtils.changeStringToString(item.getFileUid(), SysConf.FILE_SEGMENTATION);
+                List<String> pictureListTemp = new ArrayList<>();
+
+                pictureUidsTemp.forEach(picture -> {
+                    pictureListTemp.add(pictureMap.get(picture));
+                });
+                item.setPhotoList(pictureListTemp);
+            }
+        });
+        pageList.setRecords(list);
+        return pageList;
     }
 
     public String addBlog(BlogVO blogVO){
@@ -719,15 +839,15 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
         }
 
         // 判断Redis中是否缓存了第一页的内容
-//        if (currentPage == 1L) {
-//            //从Redis中获取内容
-//            String jsonResult = redisUtil.get(RedisConf.NEW_BLOG);
-//            //判断redis中是否有文章
-//            if (StringUtils.isNotEmpty(jsonResult)) {
-//                IPage pageList = JsonUtils.jsonToPojo(jsonResult, Page.class);
-//                return pageList;
-//            }
-//        }
+        if (currentPage == 1L) {
+            //从Redis中获取内容
+            String jsonResult = redisUtil.get(RedisConf.NEW_BLOG);
+            //判断redis中是否有文章
+            if (StringUtils.isNotEmpty(jsonResult)) {
+                IPage pageList = JsonUtils.jsonToPojo(jsonResult, Page.class);
+                return pageList;
+            }
+        }
 
         QueryWrapper<Blog> queryWrapper = new QueryWrapper<>();
         Page<Blog> page = new Page<>();
@@ -751,9 +871,9 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
         pageList.setRecords(list);
 
         //将从最新博客缓存到redis中
-//        if (currentPage == 1L) {
-//            redisUtil.setEx(RedisConf.NEW_BLOG, JsonUtils.objectToJson(pageList), 1, TimeUnit.HOURS);
-//        }
+        if (currentPage == 1L) {
+            redisUtil.setEx(RedisConf.NEW_BLOG, JsonUtils.objectToJson(pageList), 1, TimeUnit.HOURS);
+        }
         return pageList;
     }
 

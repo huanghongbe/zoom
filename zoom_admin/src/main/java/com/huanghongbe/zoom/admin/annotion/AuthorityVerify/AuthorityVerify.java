@@ -1,4 +1,4 @@
-package com.huanghongbe.zoom.admin.AuthorityVerify;
+package com.huanghongbe.zoom.admin.annotion.AuthorityVerify;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -1,4 +1,4 @@
-package com.huanghongbe.zoom.admin.AuthorityVerify;
+package com.huanghongbe.zoom.admin.annotion.AuthorityVerify;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.google.gson.internal.LinkedTreeMap;

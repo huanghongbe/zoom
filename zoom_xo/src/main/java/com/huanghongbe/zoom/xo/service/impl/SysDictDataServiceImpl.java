@@ -2,27 +2,30 @@ package com.huanghongbe.zoom.xo.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.huanghongbe.zoom.base.enums.EPublish;
 import com.huanghongbe.zoom.base.enums.EStatus;
+import com.huanghongbe.zoom.base.holder.RequestHolder;
 import com.huanghongbe.zoom.base.service.impl.SuperServiceImpl;
 import com.huanghongbe.zoom.commons.entity.SysDictData;
 import com.huanghongbe.zoom.commons.entity.SysDictType;
 import com.huanghongbe.zoom.utils.JsonUtils;
 import com.huanghongbe.zoom.utils.RedisUtil;
+import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.utils.StringUtils;
+import com.huanghongbe.zoom.xo.enums.MessageConf;
 import com.huanghongbe.zoom.xo.enums.SQLConf;
 import com.huanghongbe.zoom.xo.enums.SysConf;
 import com.huanghongbe.zoom.xo.mapper.SysDictDataMapper;
 import com.huanghongbe.zoom.xo.service.SysDictDataService;
 import com.huanghongbe.zoom.xo.service.SysDictTypeService;
 import com.huanghongbe.zoom.xo.vo.SysDictDataVO;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -41,22 +44,121 @@ public class SysDictDataServiceImpl extends SuperServiceImpl<SysDictDataMapper, 
 
     @Override
     public IPage<SysDictData> getPageList(SysDictDataVO sysDictDataVO) {
-        return null;
+        QueryWrapper<SysDictData> queryWrapper = new QueryWrapper<>();
+        // 字典类型UID
+        if (StringUtils.isNotEmpty(sysDictDataVO.getDictTypeUid())) {
+            queryWrapper.eq(SQLConf.DICT_TYPE_UID, sysDictDataVO.getDictTypeUid());
+        }
+        // 字典标签
+        if (StringUtils.isNotEmpty(sysDictDataVO.getDictLabel()) && !StringUtils.isEmpty(sysDictDataVO.getDictLabel().trim())) {
+            queryWrapper.like(SQLConf.DICT_LABEL, sysDictDataVO.getDictLabel().trim());
+        }
+//        Page<SysDictData> page = new Page<>();
+//        page.setCurrent(sysDictDataVO.getCurrentPage());
+//        page.setSize(sysDictDataVO.getPageSize());
+        queryWrapper.eq(SQLConf.STATUS, EStatus.ENABLE);
+        queryWrapper.orderByDesc(SQLConf.SORT, SQLConf.CREATE_TIME);
+        IPage<SysDictData> pageList = sysDictDataService.page(
+                new Page<>(sysDictDataVO.getCurrentPage(),sysDictDataVO.getPageSize()), queryWrapper);
+        List<SysDictData> sysDictDataList = pageList.getRecords();
+        Set<String> dictTypeUidList = new HashSet<>();
+        sysDictDataList.forEach(item -> {
+            dictTypeUidList.add(item.getDictTypeUid());
+        });
+        Collection<SysDictType> dictTypeList = new ArrayList<>();
+        if (dictTypeUidList.size() > 0) {
+            dictTypeList = sysDictTypeService.listByIds(dictTypeUidList);
+        }
+        Map<String, SysDictType> dictTypeMap = new HashMap<>();
+        dictTypeList.forEach(item -> {
+            dictTypeMap.put(item.getUid(), item);
+        });
+        sysDictDataList.forEach(item -> {
+            item.setSysDictType(dictTypeMap.get(item.getDictTypeUid()));
+        });
+        pageList.setRecords(sysDictDataList);
+        return pageList;
     }
 
     @Override
     public String addSysDictData(SysDictDataVO sysDictDataVO) {
-        return null;
+        HttpServletRequest request = RequestHolder.getRequest();
+        String adminUid = request.getAttribute(SysConf.ADMIN_UID).toString();
+        // 判断添加的字典数据是否存在
+        QueryWrapper<SysDictData> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(SQLConf.DICT_LABEL, sysDictDataVO.getDictLabel());
+        queryWrapper.eq(SQLConf.DICT_TYPE_UID, sysDictDataVO.getDictTypeUid());
+        queryWrapper.eq(SQLConf.STATUS, EStatus.ENABLE);
+        queryWrapper.last(SysConf.LIMIT_ONE);
+        SysDictData temp = sysDictDataService.getOne(queryWrapper);
+        if (temp != null) {
+            return ResultUtil.errorWithMessage(MessageConf.ENTITY_EXIST);
+        }
+        SysDictData sysDictData = new SysDictData();
+        // 插入字典数据，忽略状态位【使用Spring工具类提供的深拷贝，避免出现大量模板代码】
+        BeanUtils.copyProperties(sysDictDataVO, sysDictData, SysConf.STATUS);
+        sysDictData.setCreateByUid(adminUid);
+        sysDictData.setUpdateByUid(adminUid);
+        sysDictData.insert();
+        return ResultUtil.successWithMessage(MessageConf.INSERT_SUCCESS);
     }
 
     @Override
     public String editSysDictData(SysDictDataVO sysDictDataVO) {
-        return null;
+        HttpServletRequest request = RequestHolder.getRequest();
+        String adminUid = request.getAttribute(SysConf.ADMIN_UID).toString();
+        SysDictData sysDictData = sysDictDataService.getById(sysDictDataVO.getUid());
+        // 更改了标签名时，判断更改的字典数据是否存在
+        if (!sysDictData.getDictLabel().equals(sysDictDataVO.getDictLabel())) {
+            QueryWrapper<SysDictData> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq(SQLConf.DICT_LABEL, sysDictDataVO.getDictLabel());
+            queryWrapper.eq(SQLConf.DICT_TYPE_UID, sysDictDataVO.getDictTypeUid());
+            queryWrapper.eq(SQLConf.STATUS, EStatus.ENABLE);
+            queryWrapper.last(SysConf.LIMIT_ONE);
+            SysDictData temp = sysDictDataService.getOne(queryWrapper);
+            if (temp != null) {
+                return ResultUtil.errorWithMessage(MessageConf.ENTITY_EXIST);
+            }
+        }
+        // 更新数据字典【使用Spring工具类提供的深拷贝，避免出现大量模板代码】
+        BeanUtils.copyProperties(sysDictDataVO, sysDictData, SysConf.STATUS, SysConf.UID);
+        sysDictData.setUpdateByUid(adminUid);
+        sysDictData.setUpdateTime(new Date());
+        sysDictData.setUpdateByUid(adminUid);
+        sysDictData.updateById();
+
+        // 获取Redis中特定前缀
+        Set<String> keys = redisUtil.keys(SysConf.REDIS_DICT_TYPE + SysConf.REDIS_SEGMENTATION + "*");
+        redisUtil.delete(keys);
+        return ResultUtil.successWithMessage(MessageConf.UPDATE_SUCCESS);
     }
 
     @Override
     public String deleteBatchSysDictData(List<SysDictDataVO> sysDictDataVOList) {
-        return null;
+        HttpServletRequest request = RequestHolder.getRequest();
+        String adminUid = request.getAttribute(SysConf.ADMIN_UID).toString();
+        if (sysDictDataVOList.size() <= 0) {
+            return ResultUtil.errorWithMessage(MessageConf.PARAM_INCORRECT);
+        }
+        List<String> uids = new ArrayList<>();
+        sysDictDataVOList.forEach(item -> {
+            uids.add(item.getUid());
+        });
+        Collection<SysDictData> sysDictDataList = sysDictDataService.listByIds(uids);
+        sysDictDataList.forEach(item -> {
+            item.setStatus(EStatus.DISABLED);
+            item.setUpdateTime(new Date());
+            item.setUpdateByUid(adminUid);
+        });
+        Boolean save = sysDictDataService.updateBatchById(sysDictDataList);
+        // 获取Redis中特定前缀
+        Set<String> keys = redisUtil.keys(SysConf.REDIS_DICT_TYPE + SysConf.REDIS_SEGMENTATION + "*");
+        redisUtil.delete(keys);
+        if (save) {
+            return ResultUtil.successWithMessage(MessageConf.DELETE_SUCCESS);
+        } else {
+            return ResultUtil.errorWithMessage(MessageConf.DELETE_FAIL);
+        }
     }
 
     @Override

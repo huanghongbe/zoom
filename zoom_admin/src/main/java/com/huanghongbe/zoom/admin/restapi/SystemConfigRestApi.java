@@ -1,6 +1,6 @@
 package com.huanghongbe.zoom.admin.restapi;
 
-import com.huanghongbe.zoom.admin.AuthorityVerify.AuthorityVerify;
+import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.service.SystemConfigService;
 import lombok.extern.slf4j.Slf4j;
