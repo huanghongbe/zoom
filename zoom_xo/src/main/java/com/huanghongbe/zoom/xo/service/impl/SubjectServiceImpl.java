@@ -46,12 +46,14 @@ public class SubjectServiceImpl extends SuperServiceImpl<SubjectMapper, Subject>
         if (StringUtils.isNotEmpty(subjectVO.getKeyword()) && !StringUtils.isEmpty(subjectVO.getKeyword().trim())) {
             queryWrapper.like(BaseSQLConf.SUBJECT_NAME, subjectVO.getKeyword().trim());
         }
-        Page<Subject> page = new Page<>();
-        page.setCurrent(subjectVO.getCurrentPage());
-        page.setSize(subjectVO.getPageSize());
+//        Page<Subject> page = new Page<>();
+//        page.setCurrent(subjectVO.getCurrentPage());
+//        page.setSize(subjectVO.getPageSize());
         queryWrapper.eq(BaseSQLConf.STATUS, EStatus.ENABLE);
         queryWrapper.orderByDesc(BaseSQLConf.SORT);
-        IPage<Subject> pageList = subjectService.page(page, queryWrapper);
+        IPage<Subject> pageList = subjectService.page(
+                new Page<>(subjectVO.getCurrentPage(),subjectVO.getPageSize()),
+                queryWrapper);
         List<Subject> list = pageList.getRecords();
 
         final StringBuffer fileUids = new StringBuffer();
@@ -69,7 +71,7 @@ public class SubjectServiceImpl extends SuperServiceImpl<SubjectMapper, Subject>
         picList.forEach(item -> {
             pictureMap.put(item.get(SysConf.UID).toString(), item.get(SysConf.URL).toString());
         });
-        for (Subject item : list) {
+        list.forEach(item->{
             //获取图片
             if (StringUtils.isNotEmpty(item.getFileUid())) {
                 List<String> pictureUidsTemp = StringUtils.changeStringToString(item.getFileUid(), BaseSysConf.FILE_SEGMENTATION);
@@ -79,7 +81,7 @@ public class SubjectServiceImpl extends SuperServiceImpl<SubjectMapper, Subject>
                 });
                 item.setPhotoList(pictureListTemp);
             }
-        }
+        });
         pageList.setRecords(list);
         return pageList;
     }
@@ -105,7 +107,7 @@ public class SubjectServiceImpl extends SuperServiceImpl<SubjectMapper, Subject>
         subject.setCollectCount(subjectVO.getCollectCount());
         subject.setSort(subjectVO.getSort());
         subject.setStatus(EStatus.ENABLE);
-        subject.insert();
+        subjectService.save(subject);
         return ResultUtil.successWithMessage(MessageConf.INSERT_SUCCESS);
     }
 
@@ -132,7 +134,7 @@ public class SubjectServiceImpl extends SuperServiceImpl<SubjectMapper, Subject>
         subject.setSort(subjectVO.getSort());
         subject.setStatus(EStatus.ENABLE);
         subject.setUpdateTime(new Date());
-        subject.updateById();
+        subjectService.updateById(subject);
         return ResultUtil.successWithMessage(MessageConf.UPDATE_SUCCESS);
     }
 

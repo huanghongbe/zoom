@@ -78,7 +78,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
         //请求头 'Authorization': tokenHead + token
         if (authHeader != null && authHeader.startsWith(tokenHead)) {
 
-            log.error("传递过来的token为: {}", authHeader);
+            log.info("传递过来的token为: {}", authHeader);
 
             final String token = authHeader.substring(tokenHead.length());
             // 私钥

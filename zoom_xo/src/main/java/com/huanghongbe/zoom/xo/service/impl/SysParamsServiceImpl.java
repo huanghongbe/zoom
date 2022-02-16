@@ -6,10 +6,12 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.huanghongbe.zoom.base.enums.EStatus;
 import com.huanghongbe.zoom.base.exception.exceptionType.QueryException;
+import com.huanghongbe.zoom.base.global.Constants;
 import com.huanghongbe.zoom.base.global.ErrorCode;
 import com.huanghongbe.zoom.base.service.impl.SuperServiceImpl;
 import com.huanghongbe.zoom.commons.entity.SysParams;
 import com.huanghongbe.zoom.utils.RedisUtil;
+import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.utils.StringUtils;
 import com.huanghongbe.zoom.xo.enums.MessageConf;
 import com.huanghongbe.zoom.xo.enums.RedisConf;
@@ -21,6 +23,9 @@ import com.huanghongbe.zoom.xo.vo.SysParamsVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -82,16 +87,77 @@ public class SysParamsServiceImpl extends SuperServiceImpl<SysParamsMapper,SysPa
 
     @Override
     public String addSysParams(SysParamsVO sysParamsVO) {
-        return null;
+        // 判断添加的字典类型是否存在
+        QueryWrapper<SysParams> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(SQLConf.PARAMS_KEY, sysParamsVO.getParamsKey());
+        queryWrapper.eq(SQLConf.STATUS, EStatus.ENABLE);
+        queryWrapper.last(SysConf.LIMIT_ONE);
+        SysParams temp = sysParamsService.getOne(queryWrapper);
+        if (temp != null) {
+            return ResultUtil.errorWithMessage(MessageConf.ENTITY_EXIST);
+        }
+        SysParams sysParams = new SysParams();
+        sysParams.setParamsName(sysParamsVO.getParamsName());
+        sysParams.setParamsKey(sysParamsVO.getParamsKey());
+        sysParams.setParamsValue(sysParamsVO.getParamsValue());
+        sysParams.setParamsType(sysParamsVO.getParamsType());
+        sysParams.setRemark(sysParamsVO.getRemark());
+        sysParams.setSort(sysParamsVO.getSort());
+        sysParams.insert();
+        return ResultUtil.successWithMessage(MessageConf.INSERT_SUCCESS);
     }
 
     @Override
     public String editSysParams(SysParamsVO sysParamsVO) {
-        return null;
+        SysParams sysParams = sysParamsService.getById(sysParamsVO.getUid());
+        // 判断编辑的参数键名是否存在
+        if (!sysParamsVO.getParamsKey().equals(sysParams.getParamsKey())) {
+            QueryWrapper<SysParams> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq(SQLConf.PARAMS_KEY, sysParamsVO.getParamsKey());
+            queryWrapper.eq(SQLConf.STATUS, EStatus.ENABLE);
+            queryWrapper.last(SysConf.LIMIT_ONE);
+            SysParams temp = sysParamsService.getOne(queryWrapper);
+            if (temp != null) {
+                return ResultUtil.errorWithMessage(MessageConf.ENTITY_EXIST);
+            }
+        }
+        sysParams.setParamsName(sysParamsVO.getParamsName());
+        sysParams.setParamsKey(sysParamsVO.getParamsKey());
+        sysParams.setParamsValue(sysParamsVO.getParamsValue());
+        sysParams.setParamsType(sysParamsVO.getParamsType());
+        sysParams.setRemark(sysParamsVO.getRemark());
+        sysParams.setSort(sysParamsVO.getSort());
+        sysParams.setUpdateTime(new Date());
+        sysParams.updateById();
+        // 清空Redis中存在的配置
+        redisUtil.delete(RedisConf.SYSTEM_PARAMS + RedisConf.SEGMENTATION + sysParamsVO.getParamsKey());
+        return ResultUtil.successWithMessage(MessageConf.UPDATE_SUCCESS);
     }
 
     @Override
     public String deleteBatchSysParams(List<SysParamsVO> sysParamsVOList) {
-        return null;
+        List<String> sysParamsUidList = new ArrayList<>();
+        sysParamsVOList.forEach(item -> {
+            sysParamsUidList.add(item.getUid());
+        });
+        if (sysParamsUidList.size() >= 0) {
+            Collection<SysParams> sysParamsList = sysParamsService.listByIds(sysParamsUidList);
+            // 更新完成数据库后，还需要清空Redis中的缓存，因此需要存储键值
+            List<String> redisKeys = new ArrayList<>();
+            for(SysParams item : sysParamsList) {
+                // 判断删除列表中是否含有系统内置参数
+                if(item.getParamsType() == Constants.NUM_ONE) {
+                    return ResultUtil.errorWithMessage("系统内置参数无法删除");
+                }
+                item.setStatus(EStatus.DISABLED);
+                redisKeys.add(RedisConf.SYSTEM_PARAMS + RedisConf.SEGMENTATION + item.getParamsKey());
+            }
+            sysParamsService.updateBatchById(sysParamsList);
+            // 清空Redis中的配置
+            redisUtil.delete(redisKeys);
+            return ResultUtil.successWithMessage(MessageConf.DELETE_SUCCESS);
+        } else {
+            return ResultUtil.errorWithMessage(MessageConf.DELETE_FAIL);
+        }
     }
 }

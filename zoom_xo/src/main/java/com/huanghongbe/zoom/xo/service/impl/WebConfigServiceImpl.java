@@ -10,6 +10,7 @@ import com.huanghongbe.zoom.commons.entity.WebConfig;
 import com.huanghongbe.zoom.commons.feign.PictureFeignClient;
 import com.huanghongbe.zoom.utils.JsonUtils;
 import com.huanghongbe.zoom.utils.RedisUtil;
+import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.utils.StringUtils;
 import com.huanghongbe.zoom.xo.enums.MessageConf;
 import com.huanghongbe.zoom.xo.enums.RedisConf;
@@ -19,13 +20,12 @@ import com.huanghongbe.zoom.xo.mapper.WebConfigMapper;
 import com.huanghongbe.zoom.xo.service.WebConfigService;
 import com.huanghongbe.zoom.xo.utils.WebUtil;
 import com.huanghongbe.zoom.xo.vo.WebConfigVO;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -46,7 +46,32 @@ public class WebConfigServiceImpl extends SuperServiceImpl<WebConfigMapper, WebC
     private PictureFeignClient pictureFeignClient;
     @Override
     public WebConfig getWebConfig() {
-        return null;
+        QueryWrapper<WebConfig> queryWrapper = new QueryWrapper<>();
+        queryWrapper.orderByDesc(SQLConf.CREATE_TIME);
+        WebConfig webConfig = webConfigService.getOne(queryWrapper);
+
+        //获取图片
+        if (webConfig != null && StringUtils.isNotEmpty(webConfig.getLogo())) {
+            String pictureList = this.pictureFeignClient.getPicture(webConfig.getLogo(), SysConf.FILE_SEGMENTATION);
+            webConfig.setPhotoList(webUtil.getPicture(pictureList));
+        }
+
+        //获取支付宝收款二维码
+        if (webConfig != null && StringUtils.isNotEmpty(webConfig.getAliPay())) {
+            String pictureList = this.pictureFeignClient.getPicture(webConfig.getAliPay(), SysConf.FILE_SEGMENTATION);
+            if (webUtil.getPicture(pictureList).size() > 0) {
+                webConfig.setAliPayPhoto(webUtil.getPicture(pictureList).get(0));
+            }
+
+        }
+        //获取微信收款二维码
+        if (webConfig != null && StringUtils.isNotEmpty(webConfig.getWeixinPay())) {
+            String pictureList = this.pictureFeignClient.getPicture(webConfig.getWeixinPay(), SysConf.FILE_SEGMENTATION);
+            if (webUtil.getPicture(pictureList).size() > 0) {
+                webConfig.setWeixinPayPhoto(webUtil.getPicture(pictureList).get(0));
+            }
+        }
+        return webConfig;
     }
 
     @Override
@@ -158,7 +183,27 @@ public class WebConfigServiceImpl extends SuperServiceImpl<WebConfigMapper, WebC
 
     @Override
     public String editWebConfig(WebConfigVO webConfigVO) {
-        return null;
+        if (StringUtils.isEmpty(webConfigVO.getUid())) {
+            WebConfig webConfig = new WebConfig();
+            // 设置网站配置【使用Spring工具类提供的深拷贝】
+            BeanUtils.copyProperties(webConfigVO, webConfig, SysConf.STATUS);
+            webConfigService.save(webConfig);
+
+        } else {
+            WebConfig webConfig = webConfigService.getById(webConfigVO.getUid());
+            // 更新网站配置【使用Spring工具类提供的深拷贝】
+            BeanUtils.copyProperties(webConfigVO, webConfig, SysConf.STATUS, SysConf.UID);
+            webConfig.setUpdateTime(new Date());
+            webConfigService.updateById(webConfig);
+        }
+
+        // 修改配置后，清空Redis中的 WEB_CONFIG
+        redisUtil.delete(RedisConf.WEB_CONFIG);
+        // 同时清空Redis中的登录方式
+        Set<String> keySet = redisUtil.keys(RedisConf.LOGIN_TYPE + Constants.SYMBOL_STAR);
+        redisUtil.delete(keySet);
+
+        return ResultUtil.successWithMessage(MessageConf.UPDATE_SUCCESS);
     }
 
     @Override

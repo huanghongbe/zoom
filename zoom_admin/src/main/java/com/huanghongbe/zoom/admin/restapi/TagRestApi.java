@@ -3,6 +3,7 @@ package com.huanghongbe.zoom.admin.restapi;
 
 import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.admin.annotion.AvoidRepeatableCommit.AvoidRepeatableCommit;
+import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
 import com.huanghongbe.zoom.admin.enums.SysConf;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
 import com.huanghongbe.zoom.utils.ResultUtil;
@@ -41,6 +42,7 @@ public class TagRestApi {
 
     @AvoidRepeatableCommit
     @AuthorityVerify
+    @OperationLogger(value = "增加标签")
     @PostMapping("/add")
     public String add(@RequestBody TagVO tagVO, BindingResult result) {
 
@@ -51,6 +53,7 @@ public class TagRestApi {
     }
 
     @AuthorityVerify
+    @OperationLogger(value = "编辑标签")
     @PostMapping("/edit")
     public String edit(@RequestBody TagVO tagVO, BindingResult result) {
 
@@ -61,6 +64,7 @@ public class TagRestApi {
     }
 
     @AuthorityVerify
+    @OperationLogger(value = "批量删除标签")
     @PostMapping("/deleteBatch")
     public String delete(@RequestBody List<TagVO> tagVoList, BindingResult result) {
 
@@ -71,6 +75,7 @@ public class TagRestApi {
     }
 
     @AuthorityVerify
+    @OperationLogger(value = "置顶标签")
     @PostMapping("/stick")
     public String stick(@RequestBody TagVO tagVO, BindingResult result) {
         // 参数校验
@@ -80,6 +85,7 @@ public class TagRestApi {
     }
 
     @AuthorityVerify
+    @OperationLogger(value = "通过点击量排序标签")
     @PostMapping("/tagSortByClickCount")
     public String tagSortByClickCount() {
         log.info("通过点击量排序标签");
@@ -93,6 +99,7 @@ public class TagRestApi {
      * @return
      */
     @AuthorityVerify
+    @OperationLogger(value = "通过引用量排序标签")
     @PostMapping("/tagSortByCite")
     public String tagSortByCite() {
         log.info("通过引用量排序标签");

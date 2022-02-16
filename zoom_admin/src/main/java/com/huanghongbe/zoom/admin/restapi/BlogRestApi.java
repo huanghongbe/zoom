@@ -1,6 +1,7 @@
 package com.huanghongbe.zoom.admin.restapi;
 import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.admin.annotion.AvoidRepeatableCommit.AvoidRepeatableCommit;
+import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.service.BlogService;
@@ -40,6 +41,7 @@ public class BlogRestApi {
 
     @AvoidRepeatableCommit
     @AuthorityVerify
+    @OperationLogger(value = "增加博客")
     @PostMapping("/add")
     public String add(@RequestBody BlogVO blogVO, BindingResult result) {
 
@@ -49,6 +51,7 @@ public class BlogRestApi {
     }
 
     @AuthorityVerify
+    @OperationLogger(value = "本地博客上传")
     @PostMapping("/uploadLocalBlog")
     public String uploadPics(@RequestBody List<MultipartFile> filedatas) throws IOException {
 
@@ -56,6 +59,7 @@ public class BlogRestApi {
     }
 
     @AuthorityVerify
+    @OperationLogger(value = "编辑博客")
     @PostMapping("/edit")
     public String edit(@RequestBody BlogVO blogVO, BindingResult result) {
 
@@ -65,12 +69,14 @@ public class BlogRestApi {
     }
 
     @AuthorityVerify
+    @OperationLogger(value = "推荐博客排序调整")
     @PostMapping("/editBatch")
     public String editBatch(@RequestBody List<BlogVO> blogVOList) {
         return blogService.editBatch(blogVOList);
     }
 
     @AuthorityVerify
+    @OperationLogger(value = "删除博客")
     @PostMapping("/delete")
     public String delete(@RequestBody BlogVO blogVO, BindingResult result) {
         // 参数校验
@@ -79,6 +85,7 @@ public class BlogRestApi {
     }
 
     @AuthorityVerify
+    @OperationLogger(value = "删除选中博客")
     @PostMapping("/deleteBatch")
     public String deleteBatch(@RequestBody List<BlogVO> blogVoList) {
         return blogService.deleteBatchBlog(blogVoList);

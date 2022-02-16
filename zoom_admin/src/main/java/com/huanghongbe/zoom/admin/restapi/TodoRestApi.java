@@ -1,6 +1,7 @@
 package com.huanghongbe.zoom.admin.restapi;
 
 import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
+import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.enums.SysConf;
@@ -39,6 +40,7 @@ public class TodoRestApi {
     }
 
     @AuthorityVerify
+    @OperationLogger(value = "增加代办事项")
     @PostMapping("/add")
     public String add(HttpServletRequest request, @RequestBody TodoVO todoVO, BindingResult result) {
 
@@ -48,6 +50,7 @@ public class TodoRestApi {
     }
 
     @AuthorityVerify
+    @OperationLogger(value = "编辑代办事项")
     @PostMapping("/edit")
     public String edit(HttpServletRequest request, @RequestBody TodoVO todoVO, BindingResult result) {
 
@@ -57,6 +60,7 @@ public class TodoRestApi {
     }
 
     @AuthorityVerify
+    @OperationLogger(value = "删除代办事项")
     @PostMapping("/delete")
     public String delete(HttpServletRequest request, @RequestBody TodoVO todoVO, BindingResult result) {
 
@@ -66,6 +70,7 @@ public class TodoRestApi {
     }
 
     @AuthorityVerify
+    @OperationLogger(value = "批量编辑代办事项")
     @PostMapping("/toggleAll")
     public String toggleAll(HttpServletRequest request,@RequestBody TodoVO todoVO, BindingResult result) {
 

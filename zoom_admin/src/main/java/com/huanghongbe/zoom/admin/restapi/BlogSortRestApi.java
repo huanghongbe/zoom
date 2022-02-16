@@ -1,10 +1,12 @@
 package com.huanghongbe.zoom.admin.restapi;
 import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.admin.annotion.AvoidRepeatableCommit.AvoidRepeatableCommit;
+import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.service.BlogSortService;
 import com.huanghongbe.zoom.xo.vo.BlogSortVO;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
@@ -39,6 +41,7 @@ public class BlogSortRestApi {
 
     @AvoidRepeatableCommit
     @AuthorityVerify
+    @OperationLogger(value = "增加博客分类")
     @PostMapping("/add")
     public String add(@RequestBody BlogSortVO blogSortVO, BindingResult result) {
 
@@ -49,6 +52,7 @@ public class BlogSortRestApi {
     }
 
     @AuthorityVerify
+    @OperationLogger(value = "编辑博客分类")
     @PostMapping("/edit")
     public String edit(@RequestBody BlogSortVO blogSortVO, BindingResult result) {
 
@@ -59,6 +63,7 @@ public class BlogSortRestApi {
     }
 
     @AuthorityVerify
+    @OperationLogger(value = "批量删除博客分类")
     @PostMapping("/deleteBatch")
     public String delete(@RequestBody List<BlogSortVO> blogSortVoList, BindingResult result) {
 
@@ -69,6 +74,7 @@ public class BlogSortRestApi {
     }
 
     @AuthorityVerify
+    @ApiOperation(value = "置顶分类", notes = "置顶分类", response = String.class)
     @PostMapping("/stick")
     public String stick(@RequestBody BlogSortVO blogSortVO, BindingResult result) {
 
@@ -80,6 +86,7 @@ public class BlogSortRestApi {
     }
 
     @AuthorityVerify
+    @OperationLogger(value = "通过点击量排序博客分类")
     @PostMapping("/blogSortByClickCount")
     public String blogSortByClickCount() {
         log.info("通过点击量排序博客分类");
@@ -93,6 +100,7 @@ public class BlogSortRestApi {
      * @return
      */
     @AuthorityVerify
+    @OperationLogger(value = "通过引用量排序博客分类")
     @PostMapping("/blogSortByCite")
     public String blogSortByCite() {
         log.info("通过引用量排序博客分类");
