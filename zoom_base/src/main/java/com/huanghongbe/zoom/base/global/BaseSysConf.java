@@ -103,6 +103,7 @@ public class BaseSysConf {
     public final static String DELETE_ALL = "deleteAll";
     public final static String EXCHANGE_DIRECT = "exchange.direct";
     public final static String MOGU_BLOG = "mogu.blog";
+    public final static String ZOOM_BLOG = "zoom.blog";
 
     /**
      * redis相关

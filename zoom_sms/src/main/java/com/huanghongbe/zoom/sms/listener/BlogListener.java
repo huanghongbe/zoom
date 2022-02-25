@@ -1,10 +1,14 @@
 package com.huanghongbe.zoom.sms.listener;
 
+import com.huanghongbe.zoom.base.enums.ESearchModel;
 import com.huanghongbe.zoom.base.global.Constants;
+import com.huanghongbe.zoom.commons.feign.SearchFeignClient;
+import com.huanghongbe.zoom.commons.feign.WebFeignClient;
 import com.huanghongbe.zoom.sms.enums.RedisConf;
 import com.huanghongbe.zoom.sms.enums.SysConf;
 import com.huanghongbe.zoom.utils.JsonUtils;
 import com.huanghongbe.zoom.utils.RedisUtil;
+import com.huanghongbe.zoom.utils.SpringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,114 +29,114 @@ public class BlogListener {
 
     @Autowired
     private RedisUtil redisUtil;
-//    @Autowired
-//    private WebFeignClient webFeignClient;
+    @Autowired
+    private WebFeignClient webFeignClient;
 
-//    private SearchFeignClient searchFeignClient;
-//    @RabbitListener(queues = "mogu.blog")
-//    public void updateRedis(Map<String, String> map) {
-//
-//        if (map != null) {
-//            String comment = map.get(SysConf.COMMAND);
-//            String uid = map.get(SysConf.BLOG_UID);
-//
-//            //从Redis清空对应的数据
-//            redisUtil.delete(RedisConf.BLOG_LEVEL + Constants.SYMBOL_COLON + Constants.NUM_ONE);
-//            redisUtil.delete(RedisConf.BLOG_LEVEL + Constants.SYMBOL_COLON + Constants.NUM_TWO);
-//            redisUtil.delete(RedisConf.BLOG_LEVEL + Constants.SYMBOL_COLON + Constants.NUM_THREE);
-//            redisUtil.delete(RedisConf.BLOG_LEVEL + Constants.SYMBOL_COLON + Constants.NUM_FOUR);
-//            redisUtil.delete(RedisConf.HOT_BLOG);
-//            redisUtil.delete(RedisConf.NEW_BLOG);
-//            redisUtil.delete(RedisConf.DASHBOARD + Constants.SYMBOL_COLON + RedisConf.BLOG_CONTRIBUTE_COUNT);
-//            redisUtil.delete(RedisConf.DASHBOARD + Constants.SYMBOL_COLON + RedisConf.BLOG_COUNT_BY_SORT);
-//            redisUtil.delete(RedisConf.DASHBOARD + Constants.SYMBOL_COLON + RedisConf.BLOG_COUNT_BY_TAG);
-//
-//            String searchModel = ESearchModel.SQL;
-//            String resultStr = webFeignClient.getSearchModel();
-//            Map<String, String> resultTempMap = (Map<String, String>) JsonUtils.jsonToMap(resultStr, String.class);
-//            if (resultTempMap.get(SysConf.CODE) != null && SysConf.SUCCESS.equals(resultTempMap.get(SysConf.CODE).toString())) {
-//                searchModel = resultTempMap.get(SysConf.DATA);
-//            }
-//            if (ESearchModel.ES.equals(searchModel) || ESearchModel.SOLR.equals(searchModel)) {
-//                try {
-//                    searchFeignClient = SpringUtils.getBean(SearchFeignClient.class);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//
-//            try {
-//                switch (comment) {
-//                    case SysConf.DELETE_BATCH: {
-//                        log.info("mogu-sms处理批量删除博客");
-//                        redisUtil.set(RedisConf.BLOG_SORT_BY_MONTH + Constants.SYMBOL_COLON, "");
-//                        redisUtil.set(RedisConf.MONTH_SET, "");
-//
-//                        if (ESearchModel.ES.equals(searchModel)) {
-//                            // 删除ElasticSearch博客索引
-//                            searchFeignClient.deleteElasticSearchByUids(uid);
-//                        } else if (ESearchModel.SOLR.equals(searchModel)) {
-//                            // 删除Solr索引
-//                            searchFeignClient.deleteSolrIndexByUid(uid);
-//                        }
-//                    }
-//                    break;
-//
-//                    case SysConf.EDIT_BATCH: {
-//                        log.info("mogu-sms处理批量编辑博客");
-//                        redisUtil.set(RedisConf.BLOG_SORT_BY_MONTH + Constants.SYMBOL_COLON, "");
-//                        redisUtil.set(RedisConf.MONTH_SET, "");
-//                    }
-//                    break;
-//
-//                    case SysConf.ADD: {
-//                        log.info("mogu-sms处理增加博客");
-//                        updateSearch(map);
-//                        if (ESearchModel.ES.equals(searchModel)) {
-//                            // 增加ES索引
-//                            searchFeignClient.addElasticSearchIndexByUid(uid);
-//                        } else if (ESearchModel.SOLR.equals(searchModel)) {
-//                            // 增加solr索引
-//                            searchFeignClient.addSolrIndexByUid(uid);
-//                        }
-//                    }
-//                    break;
-//
-//                    case SysConf.EDIT: {
-//                        log.info("mogu-sms处理编辑博客");
-//                        updateSearch(map);
-//                        if (ESearchModel.ES.equals(searchModel)) {
-//                            // 增加ES索引
-//                            searchFeignClient.addElasticSearchIndexByUid(uid);
-//                        } else if (ESearchModel.SOLR.equals(searchModel)) {
-//                            // 增加solr索引
-//                            searchFeignClient.updateSolrIndexByUid(uid);
-//                        }
-//                    }
-//                    break;
-//
-//                    case SysConf.DELETE: {
-//                        log.info("mogu-sms处理删除博客: uid:" + uid);
-//                        updateSearch(map);
-//                        if (ESearchModel.ES.equals(searchModel)) {
-//                            // 增加ES索引
-//                            searchFeignClient.deleteElasticSearchByUid(uid);
-//                        } else if (ESearchModel.SOLR.equals(searchModel)) {
-//                            // 增加solr索引
-//                            searchFeignClient.deleteSolrIndexByUid(uid);
-//                        }
-//                    }
-//                    break;
-//                    default: {
-//                        log.info("mogu-sms处理博客兜底方法");
-//                    }
-//                }
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//                log.error("【mogu-sms】出现异常，请查看mogu-search是否启动！searchModel: " + searchModel);
-//            }
-//        }
-//    }
+    private SearchFeignClient searchFeignClient;
+    @RabbitListener(queues = "zoom.blog")
+    public void updateRedis(Map<String, String> map) {
+
+        if (map != null) {
+            String comment = map.get(SysConf.COMMAND);
+            String uid = map.get(SysConf.BLOG_UID);
+
+            //从Redis清空对应的数据
+            redisUtil.delete(RedisConf.BLOG_LEVEL + Constants.SYMBOL_COLON + Constants.NUM_ONE);
+            redisUtil.delete(RedisConf.BLOG_LEVEL + Constants.SYMBOL_COLON + Constants.NUM_TWO);
+            redisUtil.delete(RedisConf.BLOG_LEVEL + Constants.SYMBOL_COLON + Constants.NUM_THREE);
+            redisUtil.delete(RedisConf.BLOG_LEVEL + Constants.SYMBOL_COLON + Constants.NUM_FOUR);
+            redisUtil.delete(RedisConf.HOT_BLOG);
+            redisUtil.delete(RedisConf.NEW_BLOG);
+            redisUtil.delete(RedisConf.DASHBOARD + Constants.SYMBOL_COLON + RedisConf.BLOG_CONTRIBUTE_COUNT);
+            redisUtil.delete(RedisConf.DASHBOARD + Constants.SYMBOL_COLON + RedisConf.BLOG_COUNT_BY_SORT);
+            redisUtil.delete(RedisConf.DASHBOARD + Constants.SYMBOL_COLON + RedisConf.BLOG_COUNT_BY_TAG);
+
+            String searchModel = ESearchModel.SQL;
+            String resultStr = webFeignClient.getSearchModel();
+            Map<String, String> resultTempMap = (Map<String, String>) JsonUtils.jsonToMap(resultStr, String.class);
+            if (resultTempMap.get(SysConf.CODE) != null && SysConf.SUCCESS.equals(resultTempMap.get(SysConf.CODE).toString())) {
+                searchModel = resultTempMap.get(SysConf.DATA);
+            }
+            if (ESearchModel.ES.equals(searchModel) || ESearchModel.SOLR.equals(searchModel)) {
+                try {
+                    searchFeignClient = SpringUtils.getBean(SearchFeignClient.class);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            try {
+                switch (comment) {
+                    case SysConf.DELETE_BATCH: {
+                        log.info("zoom-sms处理批量删除博客");
+                        redisUtil.set(RedisConf.BLOG_SORT_BY_MONTH + Constants.SYMBOL_COLON, "");
+                        redisUtil.set(RedisConf.MONTH_SET, "");
+
+                        if (ESearchModel.ES.equals(searchModel)) {
+                            // 删除ElasticSearch博客索引
+                            searchFeignClient.deleteElasticSearchByUids(uid);
+                        } else if (ESearchModel.SOLR.equals(searchModel)) {
+                            // 删除Solr索引
+                            searchFeignClient.deleteSolrIndexByUid(uid);
+                        }
+                    }
+                    break;
+
+                    case SysConf.EDIT_BATCH: {
+                        log.info("zoom-sms处理批量编辑博客");
+                        redisUtil.set(RedisConf.BLOG_SORT_BY_MONTH + Constants.SYMBOL_COLON, "");
+                        redisUtil.set(RedisConf.MONTH_SET, "");
+                    }
+                    break;
+
+                    case SysConf.ADD: {
+                        log.info("zoom-sms处理增加博客");
+                        updateSearch(map);
+                        if (ESearchModel.ES.equals(searchModel)) {
+                            // 增加ES索引
+                            searchFeignClient.addElasticSearchIndexByUid(uid);
+                        } else if (ESearchModel.SOLR.equals(searchModel)) {
+                            // 增加solr索引
+                            searchFeignClient.addSolrIndexByUid(uid);
+                        }
+                    }
+                    break;
+
+                    case SysConf.EDIT: {
+                        log.info("zoom-sms处理编辑博客");
+                        updateSearch(map);
+                        if (ESearchModel.ES.equals(searchModel)) {
+                            // 增加ES索引
+                            searchFeignClient.addElasticSearchIndexByUid(uid);
+                        } else if (ESearchModel.SOLR.equals(searchModel)) {
+                            // 增加solr索引
+                            searchFeignClient.updateSolrIndexByUid(uid);
+                        }
+                    }
+                    break;
+
+                    case SysConf.DELETE: {
+                        log.info("zoom-sms处理删除博客: uid:" + uid);
+                        updateSearch(map);
+                        if (ESearchModel.ES.equals(searchModel)) {
+                            // 增加ES索引
+                            searchFeignClient.deleteElasticSearchByUid(uid);
+                        } else if (ESearchModel.SOLR.equals(searchModel)) {
+                            // 增加solr索引
+                            searchFeignClient.deleteSolrIndexByUid(uid);
+                        }
+                    }
+                    break;
+                    default: {
+                        log.info("zoom-sms处理博客兜底方法");
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                log.error("【zoom-sms】出现异常，请查看zoom-search是否启动！searchModel: " + searchModel);
+            }
+        }
+    }
 
     private void updateSearch(Map<String, String> map) {
         try {

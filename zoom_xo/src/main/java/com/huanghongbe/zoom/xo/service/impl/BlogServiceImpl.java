@@ -3,15 +3,14 @@ package com.huanghongbe.zoom.xo.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.google.gson.internal.LinkedTreeMap;
 import com.huanghongbe.zoom.base.enums.*;
 import com.huanghongbe.zoom.base.global.BaseSQLConf;
 import com.huanghongbe.zoom.base.global.BaseSysConf;
 import com.huanghongbe.zoom.base.global.Constants;
 import com.huanghongbe.zoom.base.holder.RequestHolder;
 import com.huanghongbe.zoom.base.service.impl.SuperServiceImpl;
-import com.huanghongbe.zoom.commons.entity.Blog;
-import com.huanghongbe.zoom.commons.entity.BlogSort;
-import com.huanghongbe.zoom.commons.entity.Tag;
+import com.huanghongbe.zoom.commons.entity.*;
 import com.huanghongbe.zoom.commons.feign.PictureFeignClient;
 import com.huanghongbe.zoom.utils.*;
 import com.huanghongbe.zoom.xo.enums.MessageConf;
@@ -21,12 +20,10 @@ import com.huanghongbe.zoom.xo.enums.SysConf;
 import com.huanghongbe.zoom.xo.mapper.BlogMapper;
 import com.huanghongbe.zoom.xo.mapper.BlogSortMapper;
 import com.huanghongbe.zoom.xo.mapper.TagMapper;
-import com.huanghongbe.zoom.xo.service.BlogService;
-import com.huanghongbe.zoom.xo.service.BlogSortService;
-import com.huanghongbe.zoom.xo.service.SysParamsService;
-import com.huanghongbe.zoom.xo.service.TagService;
+import com.huanghongbe.zoom.xo.service.*;
 import com.huanghongbe.zoom.xo.utils.WebUtil;
 import com.huanghongbe.zoom.xo.vo.BlogVO;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -35,7 +32,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -69,6 +69,18 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
     private SysParamsService sysParamsService;
     @Resource
     private PictureFeignClient pictureFeignClient;
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+    @Autowired
+    private AdminService adminService;
+    @Autowired
+    private PictureService pictureService;
+    @Autowired
+    private SystemConfigService systemConfigService;
+    @Autowired
+    private SubjectItemService subjectItemService;
+    @Autowired
+    private CommentService commentService;
 //    @DubboReference
 //    private PictureService pictureService;
     @Override
@@ -593,7 +605,35 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
     }
 
     public String addBlog(BlogVO blogVO){
-        Blog blog=new Blog();
+        HttpServletRequest request = RequestHolder.getRequest();
+        QueryWrapper<Blog> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(SQLConf.LEVEL, blogVO.getLevel());
+        queryWrapper.eq(SQLConf.STATUS, EStatus.ENABLE);
+        Integer count = blogService.count(queryWrapper);
+        // 判断插入博客的时候，会不会超过预期设置
+        String addVerdictResult = addVerdict(count + 1, blogVO.getLevel());
+        // 判断是否能够添加推荐
+        if (StringUtils.isNotBlank(addVerdictResult)) {
+            return addVerdictResult;
+        }
+        Blog blog = new Blog();
+        //如果是原创，作者为用户的昵称
+        String projectName = sysParamsService.getSysParamsValueByKey(SysConf.PROJECT_NAME_);
+        if (EOriginal.ORIGINAL.equals(blogVO.getIsOriginal())) {
+            Admin admin = adminService.getById(request.getAttribute(SysConf.ADMIN_UID).toString());
+            if (admin != null) {
+                if(StringUtils.isNotEmpty(admin.getNickName())) {
+                    blog.setAuthor(admin.getNickName());
+                } else {
+                    blog.setAuthor(admin.getUserName());
+                }
+                blog.setAdminUid(admin.getUid());
+            }
+            blog.setArticlesPart(projectName);
+        } else {
+            blog.setAuthor(blogVO.getAuthor());
+            blog.setArticlesPart(blogVO.getArticlesPart());
+        }
         blog.setTitle(blogVO.getTitle());
         blog.setSummary(blogVO.getSummary());
         blog.setContent(blogVO.getContent());
@@ -607,60 +647,330 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
         blog.setOutsideLink(blogVO.getOutsideLink());
         blog.setStatus(EStatus.ENABLE);
         blog.setOpenComment(blogVO.getOpenComment());
-        Boolean isSave=blogService.save(blog);
-        if(isSave){
-            return "success";
-        }else {
-            return "fail";
-        }
+        Boolean isSave = blogService.save(blog);
+
+        //保存成功后，需要发送消息到solr 和 redis
+        updateSolrAndRedis(isSave, blog);
+        return ResultUtil.successWithMessage(MessageConf.INSERT_SUCCESS);
     }
 
     @Override
     public String editBlog(BlogVO blogVO) {
-        return null;
+        HttpServletRequest request = RequestHolder.getRequest();
+        Blog blog = blogService.getById(blogVO.getUid());
+        QueryWrapper<Blog> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(SQLConf.LEVEL, blogVO.getLevel());
+        queryWrapper.eq(SQLConf.STATUS, EStatus.ENABLE);
+        Integer count = blogService.count(queryWrapper);
+        if (blog != null) {
+            //传递过来的和数据库中的不同，代表用户已经修改过等级了，那么需要将count数加1
+            if (!blog.getLevel().equals(blogVO.getLevel())) {
+                count += 1;
+            }
+        }
+        String addVerdictResult = addVerdict(count, blogVO.getLevel());
+        //添加的时候进行判断
+        if (StringUtils.isNotBlank(addVerdictResult)) {
+            return addVerdictResult;
+        }
+        //如果是原创，作者为用户的昵称
+        Admin admin = adminService.getById(request.getAttribute(SysConf.ADMIN_UID).toString());
+        blog.setAdminUid(admin.getUid());
+        if (EOriginal.ORIGINAL.equals(blogVO.getIsOriginal())) {
+            if(StringUtils.isNotEmpty(admin.getNickName())) {
+                blog.setAuthor(admin.getNickName());
+            } else {
+                blog.setAuthor(admin.getUserName());
+            }
+            String projectName = sysParamsService.getSysParamsValueByKey(SysConf.PROJECT_NAME_);
+            blog.setArticlesPart(projectName);
+        } else {
+            blog.setAuthor(blogVO.getAuthor());
+            blog.setArticlesPart(blogVO.getArticlesPart());
+        }
+
+        blog.setTitle(blogVO.getTitle());
+        blog.setSummary(blogVO.getSummary());
+        blog.setContent(blogVO.getContent());
+        blog.setTagUid(blogVO.getTagUid());
+        blog.setBlogSortUid(blogVO.getBlogSortUid());
+        blog.setFileUid(blogVO.getFileUid());
+        blog.setLevel(blogVO.getLevel());
+        blog.setIsOriginal(blogVO.getIsOriginal());
+        blog.setIsPublish(blogVO.getIsPublish());
+        blog.setOpenComment(blogVO.getOpenComment());
+        blog.setUpdateTime(new Date());
+        blog.setType(blogVO.getType());
+        blog.setOutsideLink(blogVO.getOutsideLink());
+        blog.setStatus(EStatus.ENABLE);
+
+        Boolean isSave = blog.updateById();
+        //保存成功后，需要发送消息到solr 和 redis
+        updateSolrAndRedis(isSave, blog);
+        return ResultUtil.successWithMessage(MessageConf.UPDATE_SUCCESS);
     }
 
     @Override
     public String editBatch(List<BlogVO> blogVOList) {
-        return null;
+        if (blogVOList.size() <= 0) {
+            return ResultUtil.errorWithMessage(MessageConf.PARAM_INCORRECT);
+        }
+        List<String> blogUidList = new ArrayList<>();
+        Map<String, BlogVO> blogVOMap = new HashMap<>();
+        blogVOList.forEach(item -> {
+            blogUidList.add(item.getUid());
+            blogVOMap.put(item.getUid(), item);
+        });
+
+        Collection<Blog> blogList = blogService.listByIds(blogUidList);
+        blogList.forEach(blog -> {
+            BlogVO blogVO = blogVOMap.get(blog.getUid());
+            if (blogVO != null) {
+                blog.setAuthor(blogVO.getAuthor());
+                blog.setArticlesPart(blogVO.getArticlesPart());
+                blog.setTitle(blogVO.getTitle());
+                blog.setSummary(blogVO.getSummary());
+                blog.setContent(blogVO.getContent());
+                blog.setTagUid(blogVO.getTagUid());
+                blog.setBlogSortUid(blogVO.getBlogSortUid());
+                blog.setFileUid(blogVO.getFileUid());
+                blog.setLevel(blogVO.getLevel());
+                blog.setIsOriginal(blogVO.getIsOriginal());
+                blog.setIsPublish(blogVO.getIsPublish());
+                blog.setSort(blogVO.getSort());
+                blog.setType(blogVO.getType());
+                blog.setOutsideLink(blogVO.getOutsideLink());
+                blog.setStatus(EStatus.ENABLE);
+            }
+        });
+        Boolean save = blogService.updateBatchById(blogList);
+
+        //保存成功后，需要发送消息到solr 和 redis
+        if (save) {
+            Map<String, Object> map = new HashMap<>();
+            map.put(SysConf.COMMAND, SysConf.EDIT_BATCH);
+            //发送到RabbitMq
+            rabbitTemplate.convertAndSend(SysConf.EXCHANGE_DIRECT, SysConf.ZOOM_BLOG, map);
+        }
+
+        return ResultUtil.successWithMessage(MessageConf.UPDATE_SUCCESS);
     }
 
     public String deleteBlog(BlogVO blogVO){
-        Blog blog=blogService.getById(blogVO.getUid());
+        Blog blog = blogService.getById(blogVO.getUid());
         blog.setStatus(EStatus.DISABLED);
-        Boolean save=updateById(blog);
-        if(save){
-            //mq打入消息,redis消费
+        Boolean save = blog.updateById();
+
+        //保存成功后，需要发送消息到solr 和 redis, 同时从专题管理Item中移除该博客
+        if (save) {
+            Map<String, Object> map = new HashMap<>();
+
+            map.put(SysConf.COMMAND, SysConf.DELETE);
+            map.put(SysConf.BLOG_UID, blog.getUid());
+            map.put(SysConf.LEVEL, blog.getLevel());
+            map.put(SysConf.CREATE_TIME, blog.getCreateTime());
+            //发送到RabbitMq
+            rabbitTemplate.convertAndSend(SysConf.EXCHANGE_DIRECT, SysConf.ZOOM_BLOG, map);
+
+            // 移除所有包含该博客的专题Item
+            List<String> blogUidList = new ArrayList<>(Constants.NUM_ONE);
+            blogUidList.add(blogVO.getUid());
+            subjectItemService.deleteBatchSubjectItemByBlogUid(blogUidList);
+
+            // 移除该文章下所有评论
+            commentService.batchDeleteCommentByBlogUid(blogUidList);
         }
-        return ResultUtil.successWithData(MessageConf.DELETE_SUCCESS);
+        return ResultUtil.successWithMessage(MessageConf.DELETE_SUCCESS);
 
     }
 
     @Override
     public String deleteBatchBlog(List<BlogVO> blogVoList) {
-        if(blogVoList.size()<=0){
+        if (blogVoList.size() <= 0) {
             return ResultUtil.errorWithMessage(MessageConf.PARAM_INCORRECT);
         }
-        List<String> uidList=new ArrayList<>();
-        StringBuffer stringBuffer=new StringBuffer();
-        blogVoList.forEach(i->{
-            uidList.add(i.getUid());
-            stringBuffer.append(i.getUid()+SysConf.FILE_SEGMENTATION);
+        List<String> uidList = new ArrayList<>();
+        StringBuffer uidSbf = new StringBuffer();
+        blogVoList.forEach(item -> {
+            uidList.add(item.getUid());
+            uidSbf.append(item.getUid() + SysConf.FILE_SEGMENTATION);
         });
         Collection<Blog> blogList = blogService.listByIds(uidList);
-        blogList.forEach(i->{
-            i.setStatus(EStatus.DISABLED);
+
+        blogList.forEach(item -> {
+            item.setStatus(EStatus.DISABLED);
         });
-        Boolean save=blogService.updateBatchById(blogList);
-        if(save){
-            //MQ打入消息
+
+        Boolean save = blogService.updateBatchById(blogList);
+        //保存成功后，需要发送消息到solr 和 redis
+        if (save) {
+            Map<String, Object> map = new HashMap<>();
+            map.put(SysConf.COMMAND, SysConf.DELETE_BATCH);
+            map.put(SysConf.UID, uidSbf);
+            //发送到RabbitMq
+            rabbitTemplate.convertAndSend(SysConf.EXCHANGE_DIRECT, SysConf.ZOOM_BLOG, map);
+            // 移除所有包含该博客的专题Item
+            subjectItemService.deleteBatchSubjectItemByBlogUid(uidList);
+            // 移除该文章下所有评论
+            commentService.batchDeleteCommentByBlogUid(uidList);
         }
         return ResultUtil.successWithMessage(MessageConf.DELETE_SUCCESS);
     }
 
     @Override
     public String uploadLocalBlog(List<MultipartFile> filedatas) throws IOException {
-        return null;
+        SystemConfig systemConfig = systemConfigService.getConfig();
+        if (systemConfig == null) {
+            return ResultUtil.errorWithMessage(MessageConf.SYSTEM_CONFIG_NOT_EXIST);
+        } else {
+            if (EOpenStatus.OPEN.equals(systemConfig.getUploadQiNiu()) && (StringUtils.isEmpty(systemConfig.getQiNiuPictureBaseUrl()) || StringUtils.isEmpty(systemConfig.getQiNiuAccessKey())
+                    || StringUtils.isEmpty(systemConfig.getQiNiuSecretKey()) || StringUtils.isEmpty(systemConfig.getQiNiuBucket()) || StringUtils.isEmpty(systemConfig.getQiNiuArea()))) {
+                return ResultUtil.errorWithMessage(MessageConf.PLEASE_SET_QI_NIU);
+            }
+
+            if (EOpenStatus.OPEN.equals(systemConfig.getUploadLocal()) && StringUtils.isEmpty(systemConfig.getLocalPictureBaseUrl())) {
+                return ResultUtil.errorWithMessage(MessageConf.PLEASE_SET_LOCAL);
+            }
+        }
+
+        List<MultipartFile> fileList = new ArrayList<>();
+        List<String> fileNameList = new ArrayList<>();
+        for (MultipartFile file : filedatas) {
+            String fileOriginalName = file.getOriginalFilename();
+            if (FileUtils.isMarkdown(fileOriginalName)) {
+                fileList.add(file);
+                // 获取文件名
+                fileNameList.add(FileUtils.getFileName(fileOriginalName));
+            } else {
+                return ResultUtil.errorWithMessage("目前仅支持Markdown文件");
+            }
+        }
+
+        if (fileList.size() == 0) {
+            return ResultUtil.errorWithMessage("请选中需要上传的文件");
+        }
+
+        // 文档解析
+        List<String> fileContentList = new ArrayList<>();
+        for (MultipartFile multipartFile : fileList) {
+            try {
+                Reader reader = new InputStreamReader(multipartFile.getInputStream(), "utf-8");
+                BufferedReader br = new BufferedReader(reader);
+                String line;
+                String content = "";
+                while ((line = br.readLine()) != null) {
+                    content += line + "\n";
+                }
+                // 将Markdown转换成html
+                String blogContent = FileUtils.markdownToHtml(content);
+                fileContentList.add(blogContent);
+            } catch (Exception e) {
+                log.error("文件解析出错");
+                log.error(e.getMessage());
+            }
+        }
+
+        HttpServletRequest request = RequestHolder.getRequest();
+        String pictureList = request.getParameter(SysConf.PICTURE_LIST);
+        List<LinkedTreeMap<String, String>> list = (List<LinkedTreeMap<String, String>>) JsonUtils.jsonArrayToArrayList(pictureList);
+        Map<String, String> pictureMap = new HashMap<>();
+        for (LinkedTreeMap<String, String> item : list) {
+
+            if (EFilePriority.QI_NIU.equals(systemConfig.getContentPicturePriority())) {
+                // 获取七牛云上的图片
+                pictureMap.put(item.get(SysConf.FILE_OLD_NAME), item.get(SysConf.QI_NIU_URL));
+            } else if(EFilePriority.LOCAL.equals(systemConfig.getContentPicturePriority())) {
+                // 获取本地的图片
+                pictureMap.put(item.get(SysConf.FILE_OLD_NAME), item.get(SysConf.PIC_URL));
+            } else if(EFilePriority.MINIO.equals(systemConfig.getContentPicturePriority())) {
+                // 获取MINIO的图片
+                pictureMap.put(item.get(SysConf.FILE_OLD_NAME), item.get(SysConf.MINIO_URL));
+            }
+        }
+        // 需要替换的图片Map
+        Map<String, String> matchUrlMap = new HashMap<>();
+        for (String blogContent : fileContentList) {
+            List<String> matchList = RegexUtils.match(blogContent, "<img\\s+(?:[^>]*)src\\s*=\\s*([^>]+)>");
+            for (String matchStr : matchList) {
+                String[] splitList = matchStr.split("\"");
+                // 取出中间的图片
+                if (splitList.length >= 5) {
+                    // alt 和 src的先后顺序
+                    // 得到具体的图片路径
+                    String pictureUrl = "";
+                    if (matchStr.indexOf("alt") > matchStr.indexOf("src")) {
+                        pictureUrl = splitList[1];
+                    } else {
+                        pictureUrl = splitList[3];
+                    }
+
+                    // 判断是网络图片还是本地图片
+                    if (!pictureUrl.startsWith(SysConf.HTTP)) {
+                        // 那么就需要遍历全部的map和他匹配
+                        for (Map.Entry<String, String> map : pictureMap.entrySet()) {
+                            // 查看Map中的图片是否在需要替换的key中
+                            if (pictureUrl.indexOf(map.getKey()) > -1) {
+                                if (EFilePriority.QI_NIU.equals(systemConfig.getContentPicturePriority())) {
+                                    // 获取七牛云上的图片
+                                    matchUrlMap.put(pictureUrl, systemConfig.getQiNiuPictureBaseUrl() + map.getValue());
+                                } else if(EFilePriority.LOCAL.equals(systemConfig.getContentPicturePriority())) {
+                                    // 获取本地的图片
+                                    matchUrlMap.put(pictureUrl, systemConfig.getLocalPictureBaseUrl() + map.getValue());
+                                } else if(EFilePriority.MINIO.equals(systemConfig.getContentPicturePriority())) {
+                                    // 获取MINIO的图片
+                                    matchUrlMap.put(pictureUrl, systemConfig.getMinioPictureBaseUrl() + map.getValue());
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 获取一个排序最高的博客分类和标签
+        BlogSort blogSort = blogSortService.getTopOne();
+        Tag tag = tagService.getTopTag();
+
+        // 获取任意博客封面
+        Picture picture = pictureService.getTopOne();
+        if (blogSort == null || tag == null || picture == null) {
+            return ResultUtil.errorWithMessage("使用本地上传，请先确保博客分类，博客标签，博客图片中含有数据");
+        }
+
+        // 获取当前管理员
+        Admin admin = adminService.getMe();
+        // 存储需要上传的博客
+        List<Blog> blogList = new ArrayList<>();
+        // 开始进行图片替换操作
+        Integer count = 0;
+        String projectName = sysParamsService.getSysParamsValueByKey(SysConf.PROJECT_NAME_);
+        for (String content : fileContentList) {
+            // 循环替换里面的图片
+            for (Map.Entry<String, String> map : matchUrlMap.entrySet()) {
+                content = content.replace(map.getKey(), map.getValue());
+            }
+            Blog blog = new Blog();
+            blog.setBlogSortUid(blogSort.getUid());
+            blog.setTagUid(tag.getUid());
+            blog.setAdminUid(admin.getUid());
+            blog.setAuthor(admin.getNickName());
+            blog.setArticlesPart(projectName);
+            blog.setLevel(ELevel.NORMAL);
+            blog.setTitle(fileNameList.get(count));
+            blog.setSummary(fileNameList.get(count));
+            blog.setContent(content);
+            blog.setFileUid(picture.getFileUid());
+            blog.setIsOriginal(EOriginal.ORIGINAL);
+            blog.setIsPublish(EPublish.NO_PUBLISH);
+            blog.setOpenComment(EOpenStatus.OPEN);
+            blog.setType(Constants.STR_ZERO);
+            blogList.add(blog);
+            count++;
+        }
+        // 批量添加博客
+        blogService.saveBatch(blogList);
+        return ResultUtil.successWithMessage(MessageConf.INSERT_SUCCESS);
     }
 
     @Override
@@ -1266,6 +1576,88 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
         //将从数据库查询的数据缓存到redis中
         redisUtil.set(SysConf.MONTH_SET, JsonUtils.objectToJson(monthSet));
         return ResultUtil.successWithData(map.get(monthDate));
+    }
+
+
+    /**
+     * 添加时校验
+     *
+     * @param count
+     * @param level
+     * @return
+     */
+    private String addVerdict(Integer count, Integer level) {
+
+        //添加的时候进行判断
+        switch (level) {
+            case ELevel.FIRST: {
+                Long blogFirstCount = Long.valueOf(sysParamsService.getSysParamsValueByKey(SysConf.BLOG_FIRST_COUNT));
+                if (count > blogFirstCount) {
+                    return ResultUtil.errorWithMessage("一级推荐不能超过" + blogFirstCount + "个");
+                }
+            }
+            break;
+
+            case ELevel.SECOND: {
+                Long blogSecondCount = Long.valueOf(sysParamsService.getSysParamsValueByKey(SysConf.BLOG_SECOND_COUNT));
+                if (count > blogSecondCount) {
+                    return ResultUtil.errorWithMessage("二级推荐不能超过" + blogSecondCount + "个");
+                }
+            }
+            break;
+
+            case ELevel.THIRD: {
+                Long blogThirdCount = Long.valueOf(sysParamsService.getSysParamsValueByKey(SysConf.BLOG_THIRD_COUNT));
+                if (count > blogThirdCount) {
+                    return ResultUtil.errorWithMessage("三级推荐不能超过" + blogThirdCount + "个");
+                }
+            }
+            break;
+
+            case ELevel.FOURTH: {
+                Long blogFourthCount = Long.valueOf(sysParamsService.getSysParamsValueByKey(SysConf.BLOG_FOURTH_COUNT));
+                if (count > blogFourthCount) {
+                    return ResultUtil.errorWithMessage("四级推荐不能超过" + blogFourthCount + "个");
+                }
+            }
+            break;
+            default: {
+
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 保存成功后，需要发送消息到solr 和 redis
+     *
+     * @param isSave
+     * @param blog
+     */
+    private void updateSolrAndRedis(Boolean isSave, Blog blog) {
+        // 保存操作，并且文章已设置发布
+        if (isSave && EPublish.PUBLISH.equals(blog.getIsPublish())) {
+            Map<String, Object> map = new HashMap<>();
+            map.put(SysConf.COMMAND, SysConf.ADD);
+            map.put(SysConf.BLOG_UID, blog.getUid());
+            map.put(SysConf.LEVEL, blog.getLevel());
+            map.put(SysConf.CREATE_TIME, blog.getCreateTime());
+
+            //发送到RabbitMq
+            rabbitTemplate.convertAndSend(SysConf.EXCHANGE_DIRECT, SysConf.ZOOM_BLOG, map);
+
+        } else if (EPublish.NO_PUBLISH.equals(blog.getIsPublish())) {
+
+            //这是需要做的是，是删除redis中的该条博客数据
+            Map<String, Object> map = new HashMap<>();
+            map.put(SysConf.COMMAND, SysConf.EDIT);
+            map.put(SysConf.BLOG_UID, blog.getUid());
+            map.put(SysConf.LEVEL, blog.getLevel());
+            map.put(SysConf.CREATE_TIME, blog.getCreateTime());
+
+            //发送到RabbitMq
+            rabbitTemplate.convertAndSend(SysConf.EXCHANGE_DIRECT, SysConf.ZOOM_BLOG, map);
+        }
     }
 
     /**

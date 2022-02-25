@@ -109,7 +109,7 @@ public class ElasticSearchService {
 
         queryBuilder.withHighlightFields(highlightFieldsAry);
 
-        log.error("查询语句：{}", queryBuilder.build().getQuery().toString());
+        log.info("查询语句：{}", queryBuilder.build().getQuery().toString());
 
         //查询
         AggregatedPage<ESBlogIndex> result = elasticsearchTemplate.queryForPage(queryBuilder.build(), ESBlogIndex
