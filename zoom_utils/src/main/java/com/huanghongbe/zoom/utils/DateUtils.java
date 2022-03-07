@@ -62,8 +62,6 @@ public class DateUtils {
 
     /**
      * @return
-     * @author 陌溪
-     * @date 2018年6月14日
      */
     public static String getNowTimeFormat() {
         SimpleDateFormat formate = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");

@@ -3,8 +3,6 @@ package com.huanghongbe.zoom.base.global;
 /**
  * 常量的基类
  *
- * @author 陌溪
- * @date 2018年9月25日00:06:54
  */
 public class BaseSysConf {
 
