@@ -5,13 +5,17 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.huanghongbe.zoom.base.enums.EStatus;
 import com.huanghongbe.zoom.base.global.BaseSQLConf;
+import com.huanghongbe.zoom.base.global.Constants;
+import com.huanghongbe.zoom.base.holder.RequestHolder;
 import com.huanghongbe.zoom.base.service.impl.SuperServiceImpl;
 import com.huanghongbe.zoom.commons.entity.User;
 import com.huanghongbe.zoom.commons.feign.PictureFeignClient;
+import com.huanghongbe.zoom.utils.IpUtils;
 import com.huanghongbe.zoom.utils.MD5Utils;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.utils.StringUtils;
 import com.huanghongbe.zoom.xo.enums.MessageConf;
+import com.huanghongbe.zoom.xo.enums.RedisConf;
 import com.huanghongbe.zoom.xo.enums.SQLConf;
 import com.huanghongbe.zoom.xo.enums.SysConf;
 import com.huanghongbe.zoom.xo.mapper.UserMapper;
@@ -21,11 +25,13 @@ import com.huanghongbe.zoom.xo.utils.WebUtil;
 import com.huanghongbe.zoom.xo.vo.UserVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author ：huanghongbe
@@ -42,6 +48,8 @@ public class UserServiceImpl extends SuperServiceImpl<UserMapper, User> implemen
     private PictureFeignClient pictureFeignClient;
     @Autowired
     private SysParamsService sysParamsService;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
     @Override
     public User insertUserInfo(HttpServletRequest request, String response) {
         return null;
@@ -60,8 +68,28 @@ public class UserServiceImpl extends SuperServiceImpl<UserMapper, User> implemen
     }
 
     @Override
-    public User serRequestInfo(User user) {
-        return null;
+    public User setRequestInfo(User user) {
+        HttpServletRequest request = RequestHolder.getRequest();
+        Map<String, String> map = IpUtils.getOsAndBrowserInfo(request);
+        String os = map.get("OS");
+        String browser = map.get("BROWSER");
+        String ip = IpUtils.getIpAddr(request);
+        user.setLastLoginIp(ip);
+        user.setOs(os);
+        user.setBrowser(browser);
+        user.setLastLoginTime(new Date());
+        //从Redis中获取IP来源
+        String jsonResult = stringRedisTemplate.opsForValue().get(RedisConf.IP_SOURCE + Constants.SYMBOL_COLON + ip);
+        if (StringUtils.isEmpty(jsonResult)) {
+            String addresses = IpUtils.getAddresses(SysConf.IP + Constants.SYMBOL_RIGHT_EQUAL + ip, "utf-8");
+            if (StringUtils.isNotEmpty(addresses)) {
+                user.setIpSource(addresses);
+                stringRedisTemplate.opsForValue().set(RedisConf.IP_SOURCE + Constants.SYMBOL_COLON + ip, addresses, 24, TimeUnit.HOURS);
+            }
+        } else {
+            user.setIpSource(jsonResult);
+        }
+        return user;
     }
 
     @Override

@@ -13,7 +13,7 @@ import java.util.Date;
 
 /**
  * <p>
- * 管理员表
+ * 用户表
  * </p>
  *
  */

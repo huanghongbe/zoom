@@ -92,7 +92,53 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
 
     @Override
     public List<Blog> setTagAndSortByBlogList(List<Blog> list) {
-        return null;
+        List<String> sortUids = new ArrayList<>();
+        List<String> tagUids = new ArrayList<>();
+        list.forEach(item -> {
+            if (StringUtils.isNotEmpty(item.getBlogSortUid())) {
+                sortUids.add(item.getBlogSortUid());
+            }
+            if (StringUtils.isNotEmpty(item.getTagUid())) {
+                List<String> tagUidsTemp = StringUtils.changeStringToString(item.getTagUid(), BaseSysConf.FILE_SEGMENTATION);
+                for (String itemTagUid : tagUidsTemp) {
+                    tagUids.add(itemTagUid);
+                }
+            }
+        });
+        Collection<BlogSort> sortList = new ArrayList<>();
+        Collection<Tag> tagList = new ArrayList<>();
+        if (sortUids.size() > 0) {
+            sortList = blogSortMapper.selectBatchIds(sortUids);
+        }
+        if (tagUids.size() > 0) {
+            tagList = tagMapper.selectBatchIds(tagUids);
+        }
+        Map<String, BlogSort> sortMap = new HashMap<>();
+        Map<String, Tag> tagMap = new HashMap<>();
+        sortList.forEach(item -> {
+            sortMap.put(item.getUid(), item);
+        });
+        tagList.forEach(item -> {
+            tagMap.put(item.getUid(), item);
+        });
+        for (Blog item : list) {
+
+            //设置分类
+            if (StringUtils.isNotEmpty(item.getBlogSortUid())) {
+                item.setBlogSort(sortMap.get(item.getBlogSortUid()));
+            }
+            //获取标签
+            if (StringUtils.isNotEmpty(item.getTagUid())) {
+                List<String> tagUidsTemp = StringUtils.changeStringToString(item.getTagUid(), BaseSysConf.FILE_SEGMENTATION);
+                List<Tag> tagListTemp = new ArrayList<Tag>();
+                tagUidsTemp.forEach(tag -> {
+                    tagListTemp.add(tagMap.get(tag));
+                });
+                item.setTagList(tagListTemp);
+            }
+        }
+
+        return list;
     }
 
     @Override
@@ -466,6 +512,15 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
         queryWrapper.last(SysConf.LIMIT_TEN);
         //IPage<Blog> pageList=blogService.page(page,queryWrapper);
         List<Blog>list=blogService.setTagAndSortByBlogList(blogService.list(queryWrapper));
+        //过滤掉当前的博客
+//        List<Blog> newList = new ArrayList<>();
+//        for (Blog item : list) {
+//            if (item.getUid().equals(blogUid)) {
+//                continue;
+//            }
+//            newList.add(item);
+//        }
+//        return newList;
         return list.stream().filter(i->!i.getUid().equals(blogUid)).collect(Collectors.toList());
     }
 
@@ -1249,7 +1304,16 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
         }
         HttpServletRequest request=((ServletRequestAttributes)RequestContextHolder.getRequestAttributes()).getRequest();
         if (request.getAttribute(SysConf.USER_UID) != null) {
-            //判断该用户是否已经点赞
+            String userUid = request.getAttribute(SysConf.USER_UID).toString();
+            QueryWrapper<Comment> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq(SQLConf.USER_UID, userUid);
+            queryWrapper.eq(SQLConf.BLOG_UID, uid);
+            queryWrapper.eq(SQLConf.TYPE, ECommentType.PRAISE);
+            queryWrapper.last(SysConf.LIMIT_ONE);
+            Comment praise = commentService.getOne(queryWrapper);
+            if (praise != null) {
+                return ResultUtil.errorWithMessage(MessageConf.YOU_HAVE_BEEN_PRISE);
+            }
         }else {
             return ResultUtil.errorWithMessage(MessageConf.PLEASE_LOGIN_TO_PRISE);
         }
@@ -1266,6 +1330,15 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
         /**
          * 如果是已登录用户，向评论表添加记录
          */
+        if (request.getAttribute(SysConf.USER_UID) != null) {
+            String userUid = request.getAttribute(SysConf.USER_UID).toString();
+            Comment comment = new Comment();
+            comment.setUserUid(userUid);
+            comment.setBlogUid(uid);
+            comment.setSource(ECommentSource.BLOG_INFO.getCode());
+            comment.setType(ECommentType.PRAISE);
+            comment.insert();
+        }
         return ResultUtil.successWithData(blog.getCollectCount());
     }
 

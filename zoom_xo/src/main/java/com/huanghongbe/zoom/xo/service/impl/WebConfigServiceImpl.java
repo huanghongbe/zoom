@@ -2,6 +2,7 @@ package com.huanghongbe.zoom.xo.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.huanghongbe.zoom.base.enums.EAccountType;
+import com.huanghongbe.zoom.base.enums.ELoginType;
 import com.huanghongbe.zoom.base.exception.exceptionType.QueryException;
 import com.huanghongbe.zoom.base.global.Constants;
 import com.huanghongbe.zoom.base.global.ErrorCode;
@@ -208,6 +209,51 @@ public class WebConfigServiceImpl extends SuperServiceImpl<WebConfigMapper, WebC
 
     @Override
     public Boolean isOpenLoginType(String loginType) {
-        return null;
+        String loginTypeJson = redisUtil.get(RedisConf.LOGIN_TYPE + Constants.SYMBOL_COLON + loginType);
+        // 判断redis中是否包含该登录记录
+        if(StringUtils.isNotEmpty(loginTypeJson)) {
+            // 如果Redis中有内容，表示开启该登录方式
+            return true;
+        }else if(loginTypeJson!= null && loginTypeJson.length() == 0) {
+            // 如果内容为空串，表示没有开启该登录方式
+            return false;
+        }
+
+        QueryWrapper<WebConfig> queryWrapper = new QueryWrapper<>();
+        queryWrapper.orderByDesc(SQLConf.CREATE_TIME);
+        WebConfig webConfig = webConfigService.getOne(queryWrapper);
+        if (webConfig == null) {
+            throw new QueryException(ErrorCode.SYSTEM_CONFIG_IS_NOT_EXIST, MessageConf.SYSTEM_CONFIG_IS_NOT_EXIST);
+        }
+        // 过滤一些不需要显示的用户账号信息
+        String loginTypeListJson = webConfig.getLoginTypeList();
+        // 判断哪些联系方式需要显示出来
+        List<String> loginTypeList = JsonUtils.jsonToList(loginTypeListJson, String.class);
+        for (String item : loginTypeList) {
+            if (ELoginType.PASSWORD.getCode().equals(item)) {
+                redisUtil.set(RedisConf.LOGIN_TYPE + Constants.SYMBOL_COLON + RedisConf.PASSWORD, ELoginType.PASSWORD.getName());
+            }
+            if (ELoginType.GITEE.getCode().equals(item)) {
+                redisUtil.set(RedisConf.LOGIN_TYPE + Constants.SYMBOL_COLON + RedisConf.GITEE, ELoginType.GITEE.getName());
+            }
+            if (ELoginType.GITHUB.getCode().equals(item)) {
+                redisUtil.set(RedisConf.LOGIN_TYPE + Constants.SYMBOL_COLON + RedisConf.GITHUB, ELoginType.GITHUB.getName());
+            }
+//            if (ELoginType.QQ.getCode().equals(item)) {
+//                redisUtil.set(RedisConf.LOGIN_TYPE + Constants.SYMBOL_COLON + RedisConf.QQ, ELoginType.QQ.getName());
+//            }
+//            if (ELoginType.WECHAT.getCode().equals(item)) {
+//                redisUtil.set(RedisConf.LOGIN_TYPE + Constants.SYMBOL_COLON + RedisConf.WECHAT, ELoginType.WECHAT.getName());
+//            }
+        }
+        // 再次判断该登录方式是否开启
+        loginTypeJson = redisUtil.get(RedisConf.LOGIN_TYPE + Constants.SYMBOL_COLON + loginType);
+        if(StringUtils.isNotEmpty(loginTypeJson)) {
+            return true;
+        } else {
+            // 设置一个为空的字符串【防止缓存穿透】
+            redisUtil.set(RedisConf.LOGIN_TYPE + Constants.SYMBOL_COLON + loginType, "");
+            return false;
+        }
     }
 }

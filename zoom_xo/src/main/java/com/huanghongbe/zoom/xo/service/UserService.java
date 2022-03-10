@@ -45,7 +45,7 @@ public interface UserService extends SuperService<User> {
      * @param user
      * @return
      */
-    User serRequestInfo(User user);
+    User setRequestInfo(User user);
 
     /**
      * 通过ids获取用户列表

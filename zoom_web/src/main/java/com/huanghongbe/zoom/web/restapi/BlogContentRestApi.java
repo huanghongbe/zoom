@@ -1,6 +1,8 @@
 package com.huanghongbe.zoom.web.restapi;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.huanghongbe.zoom.base.enums.EPublish;
 import com.huanghongbe.zoom.base.enums.EStatus;
 import com.huanghongbe.zoom.base.global.Constants;
@@ -106,13 +108,15 @@ public class BlogContentRestApi {
 
     @GetMapping("/getBlogPraiseCountByUid")
     public String getBlogPraiseCountByUid(@RequestParam(name = "uid", required = false) String uid) {
-        return null;
-        //return ResultUtil.result("success", blogService.getBlogPraiseCountByUid(uid));
+        return ResultUtil.result("success", blogService.getBlogPraiseCountByUid(uid));
     }
 
     @GetMapping("/praiseBlogByUid")
     public String praiseBlogByUid(@RequestParam(name = "uid", required = false) String uid) {
-        return null;
+        if (StringUtils.isEmpty(uid)) {
+            return ResultUtil.result(SysConf.ERROR, MessageConf.PARAM_INCORRECT);
+        }
+        return blogService.praiseBlogByUid(uid);
     }
 
 
@@ -120,13 +124,22 @@ public class BlogContentRestApi {
     public String getSameBlogByTagUid(@RequestParam(name = "tagUid", required = true) String tagUid,
                                       @RequestParam(name = "currentPage", required = false, defaultValue = "1") Long currentPage,
                                       @RequestParam(name = "pageSize", required = false, defaultValue = "10") Long pageSize) {
-       return null;
+        if (StringUtils.isEmpty(tagUid)) {
+            return ResultUtil.result(SysConf.ERROR, MessageConf.PARAM_INCORRECT);
+        }
+        return ResultUtil.result(SysConf.SUCCESS, blogService.getSameBlogByTagUid(tagUid));
     }
 
 
     @GetMapping("/getSameBlogByBlogUid")
     public String getSameBlogByBlogUid(@ApiParam(name = "blogUid", value = "博客标签UID", required = true) @RequestParam(name = "blogUid", required = true) String blogUid) {
-       return null;
+        if (StringUtils.isEmpty(blogUid)) {
+            return ResultUtil.result(SysConf.ERROR, MessageConf.PARAM_INCORRECT);
+        }
+        List<Blog> blogList = blogService.getSameBlogByBlogUid(blogUid);
+        IPage<Blog> pageList = new Page<>();
+        pageList.setRecords(blogList);
+        return ResultUtil.result(SysConf.SUCCESS, pageList);
     }
 
     /**
