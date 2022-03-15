@@ -1,7 +1,9 @@
 /target/
 /temp/
 !.mvn/wrapper/maven-wrapper.jar
-
+/node_modules
+#/vue_zoom_admin
+#/vue_zoom_web
 ### STS ###
 .apt_generated
 .classpath

@@ -22,7 +22,9 @@ import com.huanghongbe.zoom.xo.service.*;
 import com.huanghongbe.zoom.xo.utils.RabbitMqUtil;
 import com.huanghongbe.zoom.xo.utils.WebUtil;
 import com.huanghongbe.zoom.xo.vo.CommentVO;
+import com.huanghongbe.zoom.xo.vo.UserVO;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -212,6 +214,157 @@ public class CommentRestApi {
             }
         });
         pageList.setRecords(getCommentReplys(firstComment, toCommentListMap));
+        return ResultUtil.result(SysConf.SUCCESS, pageList);
+    }
+
+
+    @PostMapping("/getListByUser")
+    public String getListByUser(HttpServletRequest request,@RequestBody UserVO userVO) {
+
+        if (request.getAttribute(SysConf.USER_UID) == null) {
+            return ResultUtil.result(SysConf.ERROR, MessageConf.INVALID_TOKEN);
+        }
+        String requestUserUid = request.getAttribute(SysConf.USER_UID).toString();
+        QueryWrapper<Comment> queryWrapper = new QueryWrapper<>();
+
+        //分页
+        Page<Comment> page = new Page<>();
+        page.setCurrent(userVO.getCurrentPage());
+        page.setSize(userVO.getPageSize());
+        queryWrapper.eq(SQLConf.TYPE, ECommentType.COMMENT);
+        queryWrapper.eq(SQLConf.STATUS, EStatus.ENABLE);
+        queryWrapper.orderByDesc(SQLConf.CREATE_TIME);
+        // 查找出 我的评论 和 我的回复
+        queryWrapper.and(wrapper -> wrapper.eq(SQLConf.USER_UID, requestUserUid).or().eq(SQLConf.TO_USER_UID, requestUserUid));
+        IPage<Comment> pageList = commentService.page(page, queryWrapper);
+        List<Comment> list = pageList.getRecords();
+        List<String> userUidList = new ArrayList<>();
+        list.forEach(item -> {
+            String userUid = item.getUserUid();
+            String toUserUid = item.getToUserUid();
+            if (StringUtils.isNotEmpty(userUid)) {
+                userUidList.add(item.getUserUid());
+            }
+            if (StringUtils.isNotEmpty(toUserUid)) {
+                userUidList.add(item.getToUserUid());
+            }
+        });
+
+        // 获取用户列表
+        Collection<User> userList = new ArrayList<>();
+        if (userUidList.size() > 0) {
+            userList = userService.listByIds(userUidList);
+        }
+        // 过滤掉用户的敏感信息
+        List<User> filterUserList = new ArrayList<>();
+        userList.forEach(item -> {
+            User user = new User();
+            user.setAvatar(item.getAvatar());
+            user.setUid(item.getUid());
+            user.setNickName(item.getNickName());
+            filterUserList.add(user);
+        });
+        // 获取用户头像
+        StringBuffer fileUids = new StringBuffer();
+        filterUserList.forEach(item -> {
+            if (StringUtils.isNotEmpty(item.getAvatar())) {
+                fileUids.append(item.getAvatar() + SysConf.FILE_SEGMENTATION);
+            }
+        });
+        String pictureList = null;
+        if (fileUids != null) {
+            pictureList = this.pictureFeignClient.getPicture(fileUids.toString(), SysConf.FILE_SEGMENTATION);
+        }
+        List<Map<String, Object>> picList = webUtil.getPictureMap(pictureList);
+        Map<String, String> pictureMap = new HashMap<>();
+        picList.forEach(item -> {
+            pictureMap.put(item.get(SQLConf.UID).toString(), item.get(SQLConf.URL).toString());
+        });
+
+        Map<String, User> userMap = new HashMap<>();
+        filterUserList.forEach(item -> {
+            if (StringUtils.isNotEmpty(item.getAvatar()) && pictureMap.get(item.getAvatar()) != null) {
+                item.setPhotoUrl(pictureMap.get(item.getAvatar()));
+            }
+            userMap.put(item.getUid(), item);
+        });
+
+        // 将评论列表划分为 我的评论 和 我的回复
+        List<Comment> commentList = new ArrayList<>();
+        List<Comment> replyList = new ArrayList<>();
+        list.forEach(item -> {
+            if (StringUtils.isNotEmpty(item.getUserUid())) {
+                item.setUser(userMap.get(item.getUserUid()));
+            }
+
+            if (StringUtils.isNotEmpty(item.getToUserUid())) {
+                item.setToUser(userMap.get(item.getToUserUid()));
+            }
+            // 设置sourceName
+            if (StringUtils.isNotEmpty(item.getSource())) {
+                try {
+                    item.setSourceName(ECommentSource.valueOf(item.getSource()).getName());
+                } catch (Exception e) {
+                    log.error("ECommentSource转换异常");
+                }
+            }
+            if (requestUserUid.equals(item.getUserUid())) {
+                commentList.add(item);
+            }
+            if (requestUserUid.equals(item.getToUserUid())) {
+                replyList.add(item);
+            }
+        });
+
+        Map<String, Object> resultMap = new HashMap<>();
+        resultMap.put(SysConf.COMMENT_LIST, commentList);
+        resultMap.put(SysConf.REPLY_LIST, replyList);
+        return ResultUtil.result(SysConf.SUCCESS, resultMap);
+    }
+
+    /**
+     * 获取用户点赞信息
+     *
+     * @return
+     */
+    @PostMapping("/getPraiseListByUser")
+    public String getPraiseListByUser(@ApiParam(name = "currentPage", value = "当前页数", required = false) @RequestParam(name = "currentPage", required = false, defaultValue = "1") Long currentPage,
+                                      @ApiParam(name = "pageSize", value = "每页显示数目", required = false) @RequestParam(name = "pageSize", required = false, defaultValue = "10") Long pageSize) {
+        HttpServletRequest request = RequestHolder.getRequest();
+        if (request.getAttribute(SysConf.USER_UID) == null || request.getAttribute(SysConf.TOKEN) == null) {
+            return ResultUtil.result(SysConf.ERROR, MessageConf.INVALID_TOKEN);
+        }
+        String userUid = request.getAttribute(SysConf.USER_UID).toString();
+        QueryWrapper<Comment> queryWrappe = new QueryWrapper<>();
+        queryWrappe.eq(SQLConf.USER_UID, userUid);
+        queryWrappe.eq(SQLConf.TYPE, ECommentType.PRAISE);
+        queryWrappe.eq(SQLConf.STATUS, EStatus.ENABLE);
+        queryWrappe.orderByDesc(SQLConf.CREATE_TIME);
+        Page<Comment> page = new Page<>();
+        page.setCurrent(currentPage);
+        page.setSize(pageSize);
+        IPage<Comment> pageList = commentService.page(page, queryWrappe);
+        List<Comment> praiseList = pageList.getRecords();
+        List<String> blogUids = new ArrayList<>();
+        praiseList.forEach(item -> {
+            blogUids.add(item.getBlogUid());
+        });
+        Map<String, Blog> blogMap = new HashMap<>();
+        if (blogUids.size() > 0) {
+            Collection<Blog> blogList = blogService.listByIds(blogUids);
+            blogList.forEach(blog -> {
+                // 并不需要content内容
+                blog.setContent("");
+                blogMap.put(blog.getUid(), blog);
+            });
+        }
+
+        praiseList.forEach(item -> {
+            if (blogMap.get(item.getBlogUid()) != null) {
+                item.setBlog(blogMap.get(item.getBlogUid()));
+            }
+        });
+        pageList.setRecords(praiseList);
         return ResultUtil.result(SysConf.SUCCESS, pageList);
     }
 

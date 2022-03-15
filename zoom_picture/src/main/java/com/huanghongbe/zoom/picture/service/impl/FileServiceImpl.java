@@ -54,7 +54,33 @@ public class FileServiceImpl extends SuperServiceImpl<FileMapper, File> implemen
     private FeignUtil feignUtil;
     @Override
     public String cropperPicture(List<MultipartFile> multipartFileList) {
-        return null;
+        HttpServletRequest request = RequestHolder.getRequest();
+        // 获取系统配置文件
+        SystemConfig systemConfig = feignUtil.getSystemConfig();
+        String qiNiuPictureBaseUrl = systemConfig.getQiNiuPictureBaseUrl();
+        String localPictureBaseUrl = systemConfig.getLocalPictureBaseUrl();
+        String minioPictureBaseUrl = systemConfig.getMinioPictureBaseUrl();
+        String result = fileService.batchUploadFile(request, multipartFileList, systemConfig);
+        List<Map<String, Object>> listMap = new ArrayList<>();
+        Map<String, Object> picMap = (Map<String, Object>) JsonUtils.jsonToObject(result, Map.class);
+        if (SysConf.SUCCESS.equals(picMap.get(SysConf.CODE))) {
+            List<Map<String, Object>> picData = (List<Map<String, Object>>) picMap.get(SysConf.DATA);
+            if (picData.size() > 0) {
+                for (int i = 0; i < picData.size(); i++) {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put(SysConf.UID, picData.get(i).get(SysConf.UID));
+                    if (EFilePriority.QI_NIU.equals(systemConfig.getPicturePriority())) {
+                        item.put(SysConf.URL, qiNiuPictureBaseUrl + picData.get(i).get(SysConf.QI_NIU_URL));
+                    } else if (EFilePriority.MINIO.equals(systemConfig.getPicturePriority())) {
+                        item.put(SysConf.URL, minioPictureBaseUrl + picData.get(i).get(SysConf.MINIO_URL));
+                    } else {
+                        item.put(SysConf.URL, localPictureBaseUrl + picData.get(i).get(SysConf.PIC_URL));
+                    }
+                    listMap.add(item);
+                }
+            }
+        }
+        return ResultUtil.result(SysConf.SUCCESS, listMap);
     }
 
     @Override
