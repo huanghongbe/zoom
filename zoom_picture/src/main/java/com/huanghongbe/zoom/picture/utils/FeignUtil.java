@@ -100,65 +100,58 @@ public class FeignUtil {
                 // 判断是否是通过params参数传递过来的
                 systemConfigMap = this.getSystemConfigMap(paramsToken);
             }
-        }
-
-        if (systemConfigMap == null) {
-            log.error(MessageConf.PLEASE_SET_QI_NIU);
-            throw new QueryException(ErrorCode.PLEASE_SET_QI_NIU, MessageConf.PLEASE_SET_QI_NIU);
-        }
-
-        SystemConfig systemConfig = new SystemConfig();
         if (systemConfigMap == null) {
             throw new QueryException(ErrorCode.SYSTEM_CONFIG_NOT_EXIST, MessageConf.SYSTEM_CONFIG_NOT_EXIST);
-        } else {
-            String uploadQiNiu = systemConfigMap.get(SysConf.UPLOAD_QI_NIU);
-            String uploadLocal = systemConfigMap.get(SysConf.UPLOAD_LOCAL);
-            String localPictureBaseUrl = systemConfigMap.get(SysConf.LOCAL_PICTURE_BASE_URL);
-            String qiNiuPictureBaseUrl = systemConfigMap.get(SysConf.QI_NIU_PICTURE_BASE_URL);
-            String qiNiuAccessKey = systemConfigMap.get(SysConf.QI_NIU_ACCESS_KEY);
-            String qiNiuSecretKey = systemConfigMap.get(SysConf.QI_NIU_SECRET_KEY);
-            String qiNiuBucket = systemConfigMap.get(SysConf.QI_NIU_BUCKET);
-            String qiNiuArea = systemConfigMap.get(SysConf.QI_NIU_AREA);
-            String minioEndPoint = systemConfigMap.get(SysConf.MINIO_END_POINT);
-            String minioAccessKey = systemConfigMap.get(SysConf.MINIO_ACCESS_KEY);
-            String minioSecretKey = systemConfigMap.get(SysConf.MINIO_SECRET_KEY);
-            String minioBucket = systemConfigMap.get(SysConf.MINIO_BUCKET);
-            String uploadMinio = systemConfigMap.get(SysConf.UPLOAD_MINIO);
-            String minioPictureBaseUrl = systemConfigMap.get(SysConf.MINIO_PICTURE_BASE_URL);
-
-            // 判断七牛云参数是否存在异常
-            if (EOpenStatus.OPEN.equals(uploadQiNiu) && (StringUtils.isEmpty(qiNiuPictureBaseUrl) || StringUtils.isEmpty(qiNiuAccessKey)
-                    || StringUtils.isEmpty(qiNiuSecretKey) || StringUtils.isEmpty(qiNiuBucket) || StringUtils.isEmpty(qiNiuArea))) {
-                throw new QueryException(ErrorCode.PLEASE_SET_QI_NIU, MessageConf.PLEASE_SET_QI_NIU);
-            }
-            // 判断本地服务参数是否存在异常
-            if (EOpenStatus.OPEN.equals(uploadLocal) && StringUtils.isEmpty(localPictureBaseUrl)) {
-                throw new QueryException(ErrorCode.PLEASE_SET_LOCAL, MessageConf.PLEASE_SET_QI_NIU);
-            }
-            // 判断Minio服务是否存在异常
-            if (EOpenStatus.OPEN.equals(uploadMinio) && (StringUtils.isEmpty(minioEndPoint) || StringUtils.isEmpty(minioPictureBaseUrl) || StringUtils.isEmpty(minioAccessKey)
-                    || StringUtils.isEmpty(minioSecretKey) || StringUtils.isEmpty(minioBucket))) {
-                throw new QueryException(ErrorCode.PLEASE_SET_MINIO, MessageConf.PLEASE_SET_MINIO);
-            }
-
-            systemConfig.setQiNiuAccessKey(qiNiuAccessKey);
-            systemConfig.setQiNiuSecretKey(qiNiuSecretKey);
-            systemConfig.setQiNiuBucket(qiNiuBucket);
-            systemConfig.setQiNiuArea(qiNiuArea);
-            systemConfig.setUploadQiNiu(uploadQiNiu);
-            systemConfig.setUploadLocal(uploadLocal);
-            systemConfig.setPicturePriority(systemConfigMap.get(SysConf.PICTURE_PRIORITY));
-            systemConfig.setLocalPictureBaseUrl(systemConfigMap.get(SysConf.LOCAL_PICTURE_BASE_URL));
-            systemConfig.setQiNiuPictureBaseUrl(systemConfigMap.get(SysConf.QI_NIU_PICTURE_BASE_URL));
-
-            systemConfig.setMinioEndPoint(minioEndPoint);
-            systemConfig.setMinioAccessKey(minioAccessKey);
-            systemConfig.setMinioSecretKey(minioSecretKey);
-            systemConfig.setMinioBucket(minioBucket);
-            systemConfig.setMinioPictureBaseUrl(minioPictureBaseUrl);
-            systemConfig.setUploadMinio(uploadMinio);
-
         }
+        }
+        SystemConfig systemConfig=new SystemConfig();
+//        String uploadQiNiu = systemConfigMap.get(SysConf.UPLOAD_QI_NIU);
+        String uploadLocal = systemConfigMap.get(SysConf.UPLOAD_LOCAL);
+        String localPictureBaseUrl = systemConfigMap.get(SysConf.LOCAL_PICTURE_BASE_URL);
+//        String qiNiuPictureBaseUrl = systemConfigMap.get(SysConf.QI_NIU_PICTURE_BASE_URL);
+//        String qiNiuAccessKey = systemConfigMap.get(SysConf.QI_NIU_ACCESS_KEY);
+//        String qiNiuSecretKey = systemConfigMap.get(SysConf.QI_NIU_SECRET_KEY);
+//        String qiNiuBucket = systemConfigMap.get(SysConf.QI_NIU_BUCKET);
+//        String qiNiuArea = systemConfigMap.get(SysConf.QI_NIU_AREA);
+//        String minioEndPoint = systemConfigMap.get(SysConf.MINIO_END_POINT);
+//        String minioAccessKey = systemConfigMap.get(SysConf.MINIO_ACCESS_KEY);
+//        String minioSecretKey = systemConfigMap.get(SysConf.MINIO_SECRET_KEY);
+//        String minioBucket = systemConfigMap.get(SysConf.MINIO_BUCKET);
+//        String uploadMinio = systemConfigMap.get(SysConf.UPLOAD_MINIO);
+//        String minioPictureBaseUrl = systemConfigMap.get(SysConf.MINIO_PICTURE_BASE_URL);
+
+//         判断七牛云参数是否存在异常
+//        if (EOpenStatus.OPEN.equals(uploadQiNiu) && (StringUtils.isEmpty(qiNiuPictureBaseUrl) || StringUtils.isEmpty(qiNiuAccessKey)
+//                || StringUtils.isEmpty(qiNiuSecretKey) || StringUtils.isEmpty(qiNiuBucket) || StringUtils.isEmpty(qiNiuArea))) {
+//            throw new QueryException(ErrorCode.PLEASE_SET_QI_NIU, MessageConf.PLEASE_SET_QI_NIU);
+//        }
+        // 判断本地服务参数是否存在异常
+        if (EOpenStatus.OPEN.equals(uploadLocal) && StringUtils.isEmpty(localPictureBaseUrl)) {
+            throw new QueryException(ErrorCode.PLEASE_SET_LOCAL, MessageConf.PLEASE_SET_QI_NIU);
+        }
+//         判断Minio服务是否存在异常
+//        if (EOpenStatus.OPEN.equals(uploadMinio) && (StringUtils.isEmpty(minioEndPoint) || StringUtils.isEmpty(minioPictureBaseUrl) || StringUtils.isEmpty(minioAccessKey)
+//                || StringUtils.isEmpty(minioSecretKey) || StringUtils.isEmpty(minioBucket))) {
+//            throw new QueryException(ErrorCode.PLEASE_SET_MINIO, MessageConf.PLEASE_SET_MINIO);
+//        }
+
+//            systemConfig.setQiNiuAccessKey(qiNiuAccessKey);
+//            systemConfig.setQiNiuSecretKey(qiNiuSecretKey);
+//            systemConfig.setQiNiuBucket(qiNiuBucket);
+//            systemConfig.setQiNiuArea(qiNiuArea);
+//            systemConfig.setUploadQiNiu(uploadQiNiu);
+        systemConfig.setUploadLocal(uploadLocal);
+//            systemConfig.setPicturePriority(systemConfigMap.get(SysConf.PICTURE_PRIORITY));
+        systemConfig.setLocalPictureBaseUrl(systemConfigMap.get(SysConf.LOCAL_PICTURE_BASE_URL));
+//            systemConfig.setQiNiuPictureBaseUrl(systemConfigMap.get(SysConf.QI_NIU_PICTURE_BASE_URL));
+
+//            systemConfig.setMinioEndPoint(minioEndPoint);
+//            systemConfig.setMinioAccessKey(minioAccessKey);
+//            systemConfig.setMinioSecretKey(minioSecretKey);
+//            systemConfig.setMinioBucket(minioBucket);
+//            systemConfig.setMinioPictureBaseUrl(minioPictureBaseUrl);
+//            systemConfig.setUploadMinio(uploadMinio);
+
         return systemConfig;
     }
 
@@ -205,22 +198,22 @@ public class FeignUtil {
                 throw new QueryException(ErrorCode.PLEASE_SET_MINIO, MessageConf.PLEASE_SET_MINIO);
             }
 
-            systemConfig.setQiNiuAccessKey(qiNiuAccessKey);
-            systemConfig.setQiNiuSecretKey(qiNiuSecretKey);
-            systemConfig.setQiNiuBucket(qiNiuBucket);
-            systemConfig.setQiNiuArea(qiNiuArea);
-            systemConfig.setUploadQiNiu(uploadQiNiu);
+//            systemConfig.setQiNiuAccessKey(qiNiuAccessKey);
+//            systemConfig.setQiNiuSecretKey(qiNiuSecretKey);
+//            systemConfig.setQiNiuBucket(qiNiuBucket);
+//            systemConfig.setQiNiuArea(qiNiuArea);
+//            systemConfig.setUploadQiNiu(uploadQiNiu);
             systemConfig.setUploadLocal(uploadLocal);
-            systemConfig.setPicturePriority(systemConfigMap.get(SysConf.PICTURE_PRIORITY));
+//            systemConfig.setPicturePriority(systemConfigMap.get(SysConf.PICTURE_PRIORITY));
             systemConfig.setLocalPictureBaseUrl(systemConfigMap.get(SysConf.LOCAL_PICTURE_BASE_URL));
-            systemConfig.setQiNiuPictureBaseUrl(systemConfigMap.get(SysConf.QI_NIU_PICTURE_BASE_URL));
+//            systemConfig.setQiNiuPictureBaseUrl(systemConfigMap.get(SysConf.QI_NIU_PICTURE_BASE_URL));
 
-            systemConfig.setMinioEndPoint(minioEndPoint);
-            systemConfig.setMinioAccessKey(minioAccessKey);
-            systemConfig.setMinioSecretKey(minioSecretKey);
-            systemConfig.setMinioBucket(minioBucket);
-            systemConfig.setMinioPictureBaseUrl(minioPictureBaseUrl);
-            systemConfig.setUploadMinio(uploadMinio);
+//            systemConfig.setMinioEndPoint(minioEndPoint);
+//            systemConfig.setMinioAccessKey(minioAccessKey);
+//            systemConfig.setMinioSecretKey(minioSecretKey);
+//            systemConfig.setMinioBucket(minioBucket);
+//            systemConfig.setMinioPictureBaseUrl(minioPictureBaseUrl);
+//            systemConfig.setUploadMinio(uploadMinio);
 
 
         }
@@ -238,56 +231,56 @@ public class FeignUtil {
         if (systemConfigMap == null) {
             throw new QueryException(ErrorCode.SYSTEM_CONFIG_NOT_EXIST, MessageConf.SYSTEM_CONFIG_NOT_EXIST);
         } else {
-            String uploadQiNiu = systemConfigMap.get(SysConf.UPLOAD_QI_NIU);
+//            String uploadQiNiu = systemConfigMap.get(SysConf.UPLOAD_QI_NIU);
             String uploadLocal = systemConfigMap.get(SysConf.UPLOAD_LOCAL);
             String localPictureBaseUrl = systemConfigMap.get(SysConf.LOCAL_PICTURE_BASE_URL);
-            String qiNiuPictureBaseUrl = systemConfigMap.get(SysConf.QI_NIU_PICTURE_BASE_URL);
-            String qiNiuAccessKey = systemConfigMap.get(SysConf.QI_NIU_ACCESS_KEY);
-            String qiNiuSecretKey = systemConfigMap.get(SysConf.QI_NIU_SECRET_KEY);
-            String qiNiuBucket = systemConfigMap.get(SysConf.QI_NIU_BUCKET);
-            String qiNiuArea = systemConfigMap.get(SysConf.QI_NIU_AREA);
-            String picturePriority = systemConfigMap.get(SysConf.PICTURE_PRIORITY);
-            String contentPicturePriority = systemConfigMap.get(SysConf.CONTENT_PICTURE_PRIORITY);
+//            String qiNiuPictureBaseUrl = systemConfigMap.get(SysConf.QI_NIU_PICTURE_BASE_URL);
+//            String qiNiuAccessKey = systemConfigMap.get(SysConf.QI_NIU_ACCESS_KEY);
+//            String qiNiuSecretKey = systemConfigMap.get(SysConf.QI_NIU_SECRET_KEY);
+//            String qiNiuBucket = systemConfigMap.get(SysConf.QI_NIU_BUCKET);
+//            String qiNiuArea = systemConfigMap.get(SysConf.QI_NIU_AREA);
+//            String picturePriority = systemConfigMap.get(SysConf.PICTURE_PRIORITY);
+//            String contentPicturePriority = systemConfigMap.get(SysConf.CONTENT_PICTURE_PRIORITY);
 
-            String minioEndPoint = systemConfigMap.get(SysConf.MINIO_END_POINT);
-            String minioAccessKey = systemConfigMap.get(SysConf.MINIO_ACCESS_KEY);
-            String minioSecretKey = systemConfigMap.get(SysConf.MINIO_SECRET_KEY);
-            String minioBucket = systemConfigMap.get(SysConf.MINIO_BUCKET);
-            String uploadMinio = systemConfigMap.get(SysConf.UPLOAD_MINIO);
-            String minioPictureBaseUrl = systemConfigMap.get(SysConf.MINIO_PICTURE_BASE_URL);
+//            String minioEndPoint = systemConfigMap.get(SysConf.MINIO_END_POINT);
+//            String minioAccessKey = systemConfigMap.get(SysConf.MINIO_ACCESS_KEY);
+//            String minioSecretKey = systemConfigMap.get(SysConf.MINIO_SECRET_KEY);
+//            String minioBucket = systemConfigMap.get(SysConf.MINIO_BUCKET);
+//            String uploadMinio = systemConfigMap.get(SysConf.UPLOAD_MINIO);
+//            String minioPictureBaseUrl = systemConfigMap.get(SysConf.MINIO_PICTURE_BASE_URL);
 
-            if (EOpenStatus.OPEN.equals(uploadQiNiu) && (StringUtils.isEmpty(qiNiuPictureBaseUrl) || StringUtils.isEmpty(qiNiuAccessKey)
-                    || StringUtils.isEmpty(qiNiuSecretKey) || StringUtils.isEmpty(qiNiuBucket) || StringUtils.isEmpty(qiNiuArea))) {
-                throw new QueryException(ErrorCode.PLEASE_SET_QI_NIU, MessageConf.PLEASE_SET_QI_NIU);
-            }
+//            if (EOpenStatus.OPEN.equals(uploadQiNiu) && (StringUtils.isEmpty(qiNiuPictureBaseUrl) || StringUtils.isEmpty(qiNiuAccessKey)
+//                    || StringUtils.isEmpty(qiNiuSecretKey) || StringUtils.isEmpty(qiNiuBucket) || StringUtils.isEmpty(qiNiuArea))) {
+//                throw new QueryException(ErrorCode.PLEASE_SET_QI_NIU, MessageConf.PLEASE_SET_QI_NIU);
+//            }
 
             if (EOpenStatus.OPEN.equals(uploadLocal) && StringUtils.isEmpty(localPictureBaseUrl)) {
                 throw new QueryException(ErrorCode.PLEASE_SET_LOCAL, MessageConf.PLEASE_SET_QI_NIU);
             }
 
-            // 判断Minio服务是否存在异常
-            if (EOpenStatus.OPEN.equals(uploadMinio) && (StringUtils.isEmpty(minioEndPoint) || StringUtils.isEmpty(minioPictureBaseUrl) || StringUtils.isEmpty(minioAccessKey)
-                    || StringUtils.isEmpty(minioSecretKey) || StringUtils.isEmpty(minioBucket))) {
-                throw new QueryException(ErrorCode.PLEASE_SET_MINIO, MessageConf.PLEASE_SET_MINIO);
-            }
+//            // 判断Minio服务是否存在异常
+//            if (EOpenStatus.OPEN.equals(uploadMinio) && (StringUtils.isEmpty(minioEndPoint) || StringUtils.isEmpty(minioPictureBaseUrl) || StringUtils.isEmpty(minioAccessKey)
+//                    || StringUtils.isEmpty(minioSecretKey) || StringUtils.isEmpty(minioBucket))) {
+//                throw new QueryException(ErrorCode.PLEASE_SET_MINIO, MessageConf.PLEASE_SET_MINIO);
+//            }
 
-            systemConfig.setQiNiuAccessKey(qiNiuAccessKey);
-            systemConfig.setQiNiuSecretKey(qiNiuSecretKey);
-            systemConfig.setQiNiuBucket(qiNiuBucket);
-            systemConfig.setQiNiuArea(qiNiuArea);
-            systemConfig.setUploadQiNiu(uploadQiNiu);
+//            systemConfig.setQiNiuAccessKey(qiNiuAccessKey);
+//            systemConfig.setQiNiuSecretKey(qiNiuSecretKey);
+//            systemConfig.setQiNiuBucket(qiNiuBucket);
+//            systemConfig.setQiNiuArea(qiNiuArea);
+//            systemConfig.setUploadQiNiu(uploadQiNiu);
             systemConfig.setUploadLocal(uploadLocal);
-            systemConfig.setPicturePriority(picturePriority);
-            systemConfig.setContentPicturePriority(contentPicturePriority);
+//            systemConfig.setPicturePriority(picturePriority);
+//            systemConfig.setContentPicturePriority(contentPicturePriority);
             systemConfig.setLocalPictureBaseUrl(localPictureBaseUrl);
-            systemConfig.setQiNiuPictureBaseUrl(qiNiuPictureBaseUrl);
+//            systemConfig.setQiNiuPictureBaseUrl(qiNiuPictureBaseUrl);
 
-            systemConfig.setMinioEndPoint(minioEndPoint);
-            systemConfig.setMinioAccessKey(minioAccessKey);
-            systemConfig.setMinioSecretKey(minioSecretKey);
-            systemConfig.setMinioBucket(minioBucket);
-            systemConfig.setMinioPictureBaseUrl(minioPictureBaseUrl);
-            systemConfig.setUploadMinio(uploadMinio);
+//            systemConfig.setMinioEndPoint(minioEndPoint);
+//            systemConfig.setMinioAccessKey(minioAccessKey);
+//            systemConfig.setMinioSecretKey(minioSecretKey);
+//            systemConfig.setMinioBucket(minioBucket);
+//            systemConfig.setMinioPictureBaseUrl(minioPictureBaseUrl);
+//            systemConfig.setUploadMinio(uploadMinio);
         }
         return systemConfig;
     }
@@ -313,7 +306,7 @@ public class FeignUtil {
         if (StringUtils.isNotEmpty(jsonResult)) {
             resultMap = (Map<String, String>) JsonUtils.jsonToMap(jsonResult, String.class);
         } else {
-            // 进行七牛云校验
+            // 进行校验
             String resultStr = webFeignClient.getSystemConfig(token);
             Map<String, Object> resultTempMap = JsonUtils.jsonToMap(resultStr);
             if (resultTempMap.get(SysConf.CODE) != null && SysConf.SUCCESS.equals(resultTempMap.get(SysConf.CODE).toString())) {

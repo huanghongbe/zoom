@@ -62,19 +62,19 @@ public class WebUtil {
                 // 将系统配置存入Redis中【设置过期时间24小时】
                 redisUtil.setEx(RedisConf.SYSTEM_CONFIG, JsonUtils.objectToJson(systemConfig), 24, TimeUnit.HOURS);
             }
-            picturePriority = systemConfig.getPicturePriority();
+//            picturePriority = systemConfig.getPicturePriority();
             localPictureBaseUrl = systemConfig.getLocalPictureBaseUrl();
-            qiNiuPictureBaseUrl = systemConfig.getQiNiuPictureBaseUrl();
-            minioPictureBaseUrl = systemConfig.getMinioPictureBaseUrl();
+//            qiNiuPictureBaseUrl = systemConfig.getQiNiuPictureBaseUrl();
+//            minioPictureBaseUrl = systemConfig.getMinioPictureBaseUrl();
         } else {
             SystemConfig systemConfig = JsonUtils.jsonToPojo(systemConfigJson, SystemConfig.class);
             if(systemConfig == null) {
                 throw new QueryException(ErrorCode.QUERY_DEFAULT_ERROR, "系统配置转换错误，请检查系统配置，或者清空Redis后重试！");
             }
-            picturePriority = systemConfig.getPicturePriority();
+//            picturePriority = systemConfig.getPicturePriority();
             localPictureBaseUrl = systemConfig.getLocalPictureBaseUrl();
-            qiNiuPictureBaseUrl = systemConfig.getQiNiuPictureBaseUrl();
-            minioPictureBaseUrl = systemConfig.getMinioPictureBaseUrl();
+//            qiNiuPictureBaseUrl = systemConfig.getQiNiuPictureBaseUrl();
+//            minioPictureBaseUrl = systemConfig.getMinioPictureBaseUrl();
         }
 
         List<String> picUrls = new ArrayList<>();
@@ -127,16 +127,16 @@ public class WebUtil {
                 // 将系统配置存入Redis中【设置过期时间24小时】
                 redisUtil.setEx(RedisConf.SYSTEM_CONFIG, JsonUtils.objectToJson(systemConfig), 24, TimeUnit.HOURS);
             }
-            picturePriority = systemConfig.getPicturePriority();
+//            picturePriority = systemConfig.getPicturePriority();
             localPictureBaseUrl = systemConfig.getLocalPictureBaseUrl();
-            qiNiuPictureBaseUrl = systemConfig.getQiNiuPictureBaseUrl();
-            minioPictureBaseUrl = systemConfig.getMinioPictureBaseUrl();
+//            qiNiuPictureBaseUrl = systemConfig.getQiNiuPictureBaseUrl();
+//            minioPictureBaseUrl = systemConfig.getMinioPictureBaseUrl();
         } else {
             SystemConfig systemConfig = JsonUtils.jsonToPojo(systemConfigJson, SystemConfig.class);
-            picturePriority = systemConfig.getPicturePriority();
+//            picturePriority = systemConfig.getPicturePriority();
             localPictureBaseUrl = systemConfig.getLocalPictureBaseUrl();
-            qiNiuPictureBaseUrl = systemConfig.getQiNiuPictureBaseUrl();
-            minioPictureBaseUrl = systemConfig.getMinioPictureBaseUrl();
+//            qiNiuPictureBaseUrl = systemConfig.getQiNiuPictureBaseUrl();
+//            minioPictureBaseUrl = systemConfig.getMinioPictureBaseUrl();
         }
 
         List<Map<String, Object>> resultList = new ArrayList<>();

@@ -878,10 +878,10 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
         if (systemConfig == null) {
             return ResultUtil.errorWithMessage(MessageConf.SYSTEM_CONFIG_NOT_EXIST);
         } else {
-            if (EOpenStatus.OPEN.equals(systemConfig.getUploadQiNiu()) && (StringUtils.isEmpty(systemConfig.getQiNiuPictureBaseUrl()) || StringUtils.isEmpty(systemConfig.getQiNiuAccessKey())
-                    || StringUtils.isEmpty(systemConfig.getQiNiuSecretKey()) || StringUtils.isEmpty(systemConfig.getQiNiuBucket()) || StringUtils.isEmpty(systemConfig.getQiNiuArea()))) {
-                return ResultUtil.errorWithMessage(MessageConf.PLEASE_SET_QI_NIU);
-            }
+//            if (EOpenStatus.OPEN.equals(systemConfig.getUploadQiNiu()) && (StringUtils.isEmpty(systemConfig.getQiNiuPictureBaseUrl()) || StringUtils.isEmpty(systemConfig.getQiNiuAccessKey())
+//                    || StringUtils.isEmpty(systemConfig.getQiNiuSecretKey()) || StringUtils.isEmpty(systemConfig.getQiNiuBucket()) || StringUtils.isEmpty(systemConfig.getQiNiuArea()))) {
+//                return ResultUtil.errorWithMessage(MessageConf.PLEASE_SET_QI_NIU);
+//            }
 
             if (EOpenStatus.OPEN.equals(systemConfig.getUploadLocal()) && StringUtils.isEmpty(systemConfig.getLocalPictureBaseUrl())) {
                 return ResultUtil.errorWithMessage(MessageConf.PLEASE_SET_LOCAL);
@@ -930,17 +930,17 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
         List<LinkedTreeMap<String, String>> list = (List<LinkedTreeMap<String, String>>) JsonUtils.jsonArrayToArrayList(pictureList);
         Map<String, String> pictureMap = new HashMap<>();
         for (LinkedTreeMap<String, String> item : list) {
-
-            if (EFilePriority.QI_NIU.equals(systemConfig.getContentPicturePriority())) {
-                // 获取七牛云上的图片
-                pictureMap.put(item.get(SysConf.FILE_OLD_NAME), item.get(SysConf.QI_NIU_URL));
-            } else if(EFilePriority.LOCAL.equals(systemConfig.getContentPicturePriority())) {
-                // 获取本地的图片
-                pictureMap.put(item.get(SysConf.FILE_OLD_NAME), item.get(SysConf.PIC_URL));
-            } else if(EFilePriority.MINIO.equals(systemConfig.getContentPicturePriority())) {
-                // 获取MINIO的图片
-                pictureMap.put(item.get(SysConf.FILE_OLD_NAME), item.get(SysConf.MINIO_URL));
-            }
+            pictureMap.put(item.get(SysConf.FILE_OLD_NAME), item.get(SysConf.PIC_URL));
+//            if (EFilePriority.QI_NIU.equals(systemConfig.getContentPicturePriority())) {
+//                // 获取七牛云上的图片
+//                pictureMap.put(item.get(SysConf.FILE_OLD_NAME), item.get(SysConf.QI_NIU_URL));
+//            } else if(EFilePriority.LOCAL.equals(systemConfig.getContentPicturePriority())) {
+//                // 获取本地的图片
+//                pictureMap.put(item.get(SysConf.FILE_OLD_NAME), item.get(SysConf.PIC_URL));
+//            } else if(EFilePriority.MINIO.equals(systemConfig.getContentPicturePriority())) {
+//                // 获取MINIO的图片
+//                pictureMap.put(item.get(SysConf.FILE_OLD_NAME), item.get(SysConf.MINIO_URL));
+//            }
         }
         // 需要替换的图片Map
         Map<String, String> matchUrlMap = new HashMap<>();
@@ -965,17 +965,19 @@ public class BlogServiceImpl extends SuperServiceImpl<BlogMapper, Blog> implemen
                         for (Map.Entry<String, String> map : pictureMap.entrySet()) {
                             // 查看Map中的图片是否在需要替换的key中
                             if (pictureUrl.indexOf(map.getKey()) > -1) {
-                                if (EFilePriority.QI_NIU.equals(systemConfig.getContentPicturePriority())) {
-                                    // 获取七牛云上的图片
-                                    matchUrlMap.put(pictureUrl, systemConfig.getQiNiuPictureBaseUrl() + map.getValue());
-                                } else if(EFilePriority.LOCAL.equals(systemConfig.getContentPicturePriority())) {
-                                    // 获取本地的图片
-                                    matchUrlMap.put(pictureUrl, systemConfig.getLocalPictureBaseUrl() + map.getValue());
-                                } else if(EFilePriority.MINIO.equals(systemConfig.getContentPicturePriority())) {
-                                    // 获取MINIO的图片
-                                    matchUrlMap.put(pictureUrl, systemConfig.getMinioPictureBaseUrl() + map.getValue());
-                                }
+                                matchUrlMap.put(pictureUrl, systemConfig.getLocalPictureBaseUrl() + map.getValue());
                                 break;
+//                                if (EFilePriority.QI_NIU.equals(systemConfig.getContentPicturePriority())) {
+//                                    // 获取七牛云上的图片
+//                                    matchUrlMap.put(pictureUrl, systemConfig.getQiNiuPictureBaseUrl() + map.getValue());
+//                                } else if(EFilePriority.LOCAL.equals(systemConfig.getContentPicturePriority())) {
+//                                    // 获取本地的图片
+//                                    matchUrlMap.put(pictureUrl, systemConfig.getLocalPictureBaseUrl() + map.getValue());
+//                                } else if(EFilePriority.MINIO.equals(systemConfig.getContentPicturePriority())) {
+//                                    // 获取MINIO的图片
+//                                    matchUrlMap.put(pictureUrl, systemConfig.getMinioPictureBaseUrl() + map.getValue());
+//                                }
+//                                break;
                             }
                         }
                     }

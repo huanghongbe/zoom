@@ -89,33 +89,35 @@ public class SystemConfigServiceImpl extends SuperServiceImpl<SystemConfigMapper
 
     @Override
     public String editSystemConfig(SystemConfigVO systemConfigVO) {
-        // 图片必须选择上传到一个区域
-        if (EOpenStatus.CLOSE.equals(systemConfigVO.getUploadLocal()) && EOpenStatus.CLOSE.equals(systemConfigVO.getUploadQiNiu()) && EOpenStatus.CLOSE.equals(systemConfigVO.getUploadMinio())) {
+        if (EOpenStatus.CLOSE.equals(systemConfigVO.getUploadLocal())) {
             return ResultUtil.errorWithMessage(MessageConf.PICTURE_MUST_BE_SELECT_AREA);
         }
-        // 图片显示优先级为本地优先，必须开启图片上传本地
-        if ((EFilePriority.LOCAL.equals(systemConfigVO.getPicturePriority())
-                || EFilePriority.LOCAL.equals(systemConfigVO.getContentPicturePriority()))
-                && EOpenStatus.CLOSE.equals(systemConfigVO.getUploadLocal())) {
-            return ResultUtil.errorWithMessage(MessageConf.MUST_BE_OPEN_LOCAL_UPLOAD);
-        }
-        // 图片显示优先级为七牛云优先，必须开启图片上传七牛云
-        if ((EFilePriority.QI_NIU.equals(systemConfigVO.getPicturePriority())
-                || EFilePriority.QI_NIU.equals(systemConfigVO.getContentPicturePriority()))
-                && EOpenStatus.CLOSE.equals(systemConfigVO.getUploadQiNiu())) {
-            return ResultUtil.errorWithMessage(MessageConf.MUST_BE_OPEN_QI_NIU_UPLOAD);
-        }
-        // 图片显示优先级为Minio优先，必须开启图片上传Minio
-        if ((EFilePriority.MINIO.equals(systemConfigVO.getPicturePriority())
-                ||EFilePriority.MINIO.equals(systemConfigVO.getContentPicturePriority()))
-                && EOpenStatus.CLOSE.equals(systemConfigVO.getUploadMinio())) {
-            return ResultUtil.errorWithMessage(MessageConf.MUST_BE_OPEN_MINIO_UPLOAD);
-        }
-
-        // 开启Email邮件通知时，必须保证Email字段不为空
-        if (EOpenStatus.OPEN.equals(systemConfigVO.getStartEmailNotification()) && StringUtils.isEmpty(systemConfigVO.getEmail())) {
-            return ResultUtil.errorWithMessage(MessageConf.MUST_BE_SET_EMAIL);
-        }
+        // 图片必须选择上传到一个区域
+//        if (EOpenStatus.CLOSE.equals(systemConfigVO.getUploadLocal()) && EOpenStatus.CLOSE.equals(systemConfigVO.getUploadQiNiu()) && EOpenStatus.CLOSE.equals(systemConfigVO.getUploadMinio())) {
+//            return ResultUtil.errorWithMessage(MessageConf.PICTURE_MUST_BE_SELECT_AREA);
+//        }
+//        // 图片显示优先级为本地优先，必须开启图片上传本地
+//        if ((EFilePriority.LOCAL.equals(systemConfigVO.getPicturePriority())
+//                || EFilePriority.LOCAL.equals(systemConfigVO.getContentPicturePriority()))
+//                && EOpenStatus.CLOSE.equals(systemConfigVO.getUploadLocal())) {
+//            return ResultUtil.errorWithMessage(MessageConf.MUST_BE_OPEN_LOCAL_UPLOAD);
+//        }
+//        // 图片显示优先级为七牛云优先，必须开启图片上传七牛云
+//        if ((EFilePriority.QI_NIU.equals(systemConfigVO.getPicturePriority())
+//                || EFilePriority.QI_NIU.equals(systemConfigVO.getContentPicturePriority()))
+//                && EOpenStatus.CLOSE.equals(systemConfigVO.getUploadQiNiu())) {
+//            return ResultUtil.errorWithMessage(MessageConf.MUST_BE_OPEN_QI_NIU_UPLOAD);
+//        }
+//        // 图片显示优先级为Minio优先，必须开启图片上传Minio
+//        if ((EFilePriority.MINIO.equals(systemConfigVO.getPicturePriority())
+//                ||EFilePriority.MINIO.equals(systemConfigVO.getContentPicturePriority()))
+//                && EOpenStatus.CLOSE.equals(systemConfigVO.getUploadMinio())) {
+//            return ResultUtil.errorWithMessage(MessageConf.MUST_BE_OPEN_MINIO_UPLOAD);
+//        }
+//        // 开启Email邮件通知时，必须保证Email字段不为空
+//        if (EOpenStatus.OPEN.equals(systemConfigVO.getStartEmailNotification()) && StringUtils.isEmpty(systemConfigVO.getEmail())) {
+//            return ResultUtil.errorWithMessage(MessageConf.MUST_BE_SET_EMAIL);
+//        }
         if (StringUtils.isEmpty(systemConfigVO.getUid())) {
             SystemConfig systemConfig = new SystemConfig();
             // 设置七牛云、邮箱、系统配置相关属性【使用Spring工具类提供的深拷贝】
@@ -123,16 +125,13 @@ public class SystemConfigServiceImpl extends SuperServiceImpl<SystemConfigMapper
             systemConfig.insert();
         } else {
             SystemConfig systemConfig = systemConfigService.getById(systemConfigVO.getUid());
-
             // 判断是否更新了图片显示优先级【如果更新了，需要请求Redis中的博客，否者将导致图片无法正常显示】
-            if(systemConfigVO.getPicturePriority() != systemConfig.getPicturePriority()) {
-                blogService.deleteRedisByBlog();
-            }
-
+//            if(systemConfigVO.getPicturePriority() != systemConfig.getPicturePriority()) {
+//                blogService.deleteRedisByBlog();
+//            }
             // 设置七牛云、邮箱、系统配置相关属性【使用Spring工具类提供的深拷贝】
             BeanUtils.copyProperties(systemConfigVO, systemConfig, SysConf.STATUS, SysConf.UID);
             systemConfig.updateById();
-
         }
         // 更新系统配置成功后，需要删除Redis中的系统配置
         redisUtil.delete(RedisConf.SYSTEM_CONFIG);

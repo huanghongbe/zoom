@@ -26,6 +26,7 @@
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+            <version>${spring-cloud-starter-alibaba-nacos-config.version}</version>
         </dependency>
 
         <dependency>
@@ -50,11 +51,11 @@
             <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>de.codecentric</groupId>
-            <artifactId>spring-boot-admin-starter-client</artifactId>
-            <version>${springBootAdmin.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>de.codecentric</groupId>-->
+<!--            <artifactId>spring-boot-admin-starter-client</artifactId>-->
+<!--            <version>${springBootAdmin.version}</version>-->
+<!--        </dependency>-->
 
         <!-- 引入lombok -->
         <dependency>

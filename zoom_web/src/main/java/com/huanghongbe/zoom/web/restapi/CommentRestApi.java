@@ -477,28 +477,27 @@ public class CommentRestApi {
                 // 表示父评论是一级评论，直接获取UID
                 comment.setFirstCommentUid(toComment.getUid());
             }
-        } else {
-            // 当该评论是一级评论的时候，说明是对 博客详情、留言板、关于我
-            // 判断是否开启邮件通知
-            SystemConfig systemConfig = systemConfigService.getConfig();
-            if (systemConfig != null && EOpenStatus.OPEN.equals(systemConfig.getStartEmailNotification())) {
-                if (StringUtils.isNotEmpty(systemConfig.getEmail())) {
-                    log.info("发送评论邮件通知");
-                    String sourceName = ECommentSource.valueOf(commentVO.getSource()).getName();
-                    String linkText = "<a href=\" " + getUrlByCommentSource(commentVO) + "\">" + sourceName + "</a>\n";
-                    String commentContent = linkText + "收到新的评论: " + commentVO.getContent();
-                    rabbitMqUtil.sendSimpleEmail(systemConfig.getEmail(), commentContent);
-                } else {
-                    log.error("网站没有配置通知接收的邮箱地址！");
-                }
-            }
         }
-
+//        else {
+//            // 当该评论是一级评论的时候，说明是对 博客详情、留言板、关于我
+//            // 判断是否开启邮件通知
+//            SystemConfig systemConfig = systemConfigService.getConfig();
+//            if (systemConfig != null && EOpenStatus.OPEN.equals(systemConfig.getStartEmailNotification())) {
+//                if (StringUtils.isNotEmpty(systemConfig.getEmail())) {
+//                    log.info("发送评论邮件通知");
+//                    String sourceName = ECommentSource.valueOf(commentVO.getSource()).getName();
+//                    String linkText = "<a href=\" " + getUrlByCommentSource(commentVO) + "\">" + sourceName + "</a>\n";
+//                    String commentContent = linkText + "收到新的评论: " + commentVO.getContent();
+//                    rabbitMqUtil.sendSimpleEmail(systemConfig.getEmail(), commentContent);
+//                } else {
+//                    log.error("网站没有配置通知接收的邮箱地址！");
+//                }
+//            }
+//        }
         comment.setUserUid(commentVO.getUserUid());
         comment.setToUid(commentVO.getToUid());
         comment.setStatus(EStatus.ENABLE);
         comment.insert();
-
         //获取图片
         if (StringUtils.isNotEmpty(user.getAvatar())) {
             String pictureList = this.pictureFeignClient.getPicture(user.getAvatar(), SysConf.FILE_SEGMENTATION);
@@ -571,5 +570,18 @@ public class CommentRestApi {
             return list;
         }
     }
+
+    @PostMapping("/readUserReceiveCommentCount")
+    public String readUserReceiveCommentCount(HttpServletRequest request) {
+        log.info("阅读用户接收的评论数");
+        // 判断用户是否登录
+        if (request.getAttribute(SysConf.USER_UID) != null) {
+            String userUid = request.getAttribute(SysConf.USER_UID).toString();
+            String redisKey = RedisConf.USER_RECEIVE_COMMENT_COUNT + Constants.SYMBOL_COLON + userUid;
+            redisUtil.delete(redisKey);
+        }
+        return ResultUtil.successWithMessage("阅读成功");
+    }
+
 }
 

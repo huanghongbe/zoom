@@ -21,6 +21,7 @@ import com.huanghongbe.zoom.xo.utils.WebUtil;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,6 +41,7 @@ import java.util.concurrent.TimeUnit;
  * @date ：2022-01-13 23:56
  */
 @RestController
+@RefreshScope
 @RequestMapping("/content")
 public class BlogContentRestApi {
 

@@ -33,6 +33,7 @@
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+            <version>${spring-cloud-starter-alibaba-nacos-config.version}</version>
         </dependency>
 
         <dependency>
@@ -46,18 +47,18 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!--Sentinel流量控制-->
-        <dependency>
-            <groupId>com.alibaba.cloud</groupId>
-            <artifactId>spring-cloud-alibaba-sentinel</artifactId>
-            <version>${sentinel.version}</version>
-        </dependency>
+<!--        &lt;!&ndash;Sentinel流量控制&ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>com.alibaba.cloud</groupId>-->
+<!--            <artifactId>spring-cloud-alibaba-sentinel</artifactId>-->
+<!--            <version>${sentinel.version}</version>-->
+<!--        </dependency>-->
 
-        <!--Sentinel持久化到Nacos-->
-        <dependency>
-            <groupId>com.alibaba.csp</groupId>
-            <artifactId>sentinel-datasource-nacos</artifactId>
-        </dependency>
+<!--        &lt;!&ndash;Sentinel持久化到Nacos&ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>com.alibaba.csp</groupId>-->
+<!--            <artifactId>sentinel-datasource-nacos</artifactId>-->
+<!--        </dependency>-->
 
         <!-- 引入Solr相关依赖 -->
         <!--        <dependency>-->
@@ -93,11 +94,11 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>de.codecentric</groupId>
-            <artifactId>spring-boot-admin-starter-client</artifactId>
-            <version>${springBootAdmin.version}</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>de.codecentric</groupId>-->
+<!--            <artifactId>spring-boot-admin-starter-client</artifactId>-->
+<!--            <version>${springBootAdmin.version}</version>-->
+<!--        </dependency>-->
 
     </dependencies>
 </project>

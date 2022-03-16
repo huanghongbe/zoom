@@ -30,6 +30,7 @@
         <javax.mail.version>1.4</javax.mail.version>
         <aliyun.java.sdk.dysmsapi.version>1.0.0</aliyun.java.sdk.dysmsapi.version>
         <aliyun.java.sdk.core.version>3.2.5</aliyun.java.sdk.core.version>
+        <spring-cloud-starter-alibaba-nacos-config.version>2.2.5.RELEASE</spring-cloud-starter-alibaba-nacos-config.version>
         <mybatis.plus.boot.starter.version>3.1.2</mybatis.plus.boot.starter.version>
         <jjwt.version>0.7.0</jjwt.version>
         <druid.version>1.1.8</druid.version>
@@ -40,7 +41,7 @@
         <eureka.version>1.2.3.RELEASE</eureka.version>
         <startFeign.version>1.4.7.RELEASE</startFeign.version>
         <qiniu.version>[7.2.0, 7.2.99]</qiniu.version>
-        <springBootAdmin.version>2.2.1</springBootAdmin.version>
+<!--        <springBootAdmin.version>2.2.1</springBootAdmin.version>-->
         <JustAuth.version>1.15.1</JustAuth.version>
         <dyuproject.version>1.1.5</dyuproject.version>
         <flexmark.version>0.62.2</flexmark.version>
@@ -52,7 +53,7 @@
         <spring.mock.version>2.0.8</spring.mock.version>
         <knife4j.version>3.0.2</knife4j.version>
         <spring-cloud-alibaba.version>2.2.4.RELEASE</spring-cloud-alibaba.version>
-        <sentinel.version>2.1.0.RELEASE</sentinel.version>
+<!--        <sentinel.version>2.1.0.RELEASE</sentinel.version>-->
     </properties>
 
 

@@ -284,20 +284,23 @@ public class AuthRestApi {
                     Map<String, Object> pictureMap = listMap.get(0);
 
                     String localPictureBaseUrl = systemConfig.getLocalPictureBaseUrl();
-                    String qiNiuPictureBaseUrl = systemConfig.getQiNiuPictureBaseUrl();
-                    String picturePriority = systemConfig.getPicturePriority();
+//                    String qiNiuPictureBaseUrl = systemConfig.getQiNiuPictureBaseUrl();
+//                    String picturePriority = systemConfig.getPicturePriority();
                     user.setAvatar(pictureMap.get(SysConf.UID).toString());
                     // 判断图片优先展示
-                    if (EOpenStatus.OPEN.equals(picturePriority)) {
-                        // 使用七牛云
-                        if (pictureMap.get(SysConf.QI_NIU_URL) != null && pictureMap.get(SysConf.UID) != null) {
-                            user.setPhotoUrl(qiNiuPictureBaseUrl + pictureMap.get(SysConf.QI_NIU_URL).toString());
-                        }
-                    } else {
-                        // 使用自建图片服务器
-                        if (pictureMap.get(SysConf.PIC_URL) != null && pictureMap.get(SysConf.UID) != null) {
-                            user.setPhotoUrl(localPictureBaseUrl + pictureMap.get(SysConf.PIC_URL).toString());
-                        }
+//                    if (EOpenStatus.OPEN.equals(picturePriority)) {
+//                        // 使用七牛云
+//                        if (pictureMap.get(SysConf.QI_NIU_URL) != null && pictureMap.get(SysConf.UID) != null) {
+//                            user.setPhotoUrl(qiNiuPictureBaseUrl + pictureMap.get(SysConf.QI_NIU_URL).toString());
+//                        }
+//                    } else {
+//                        // 使用自建图片服务器
+//                        if (pictureMap.get(SysConf.PIC_URL) != null && pictureMap.get(SysConf.UID) != null) {
+//                            user.setPhotoUrl(localPictureBaseUrl + pictureMap.get(SysConf.PIC_URL).toString());
+//                        }
+//                    }
+                    if (pictureMap.get(SysConf.PIC_URL) != null && pictureMap.get(SysConf.UID) != null) {
+                        user.setPhotoUrl(localPictureBaseUrl + pictureMap.get(SysConf.PIC_URL).toString());
                     }
                 }
             }
@@ -454,18 +457,18 @@ public class AuthRestApi {
 
         // 判断是否开启邮件通知
         SystemConfig systemConfig = systemConfigService.getConfig();
-        if (systemConfig != null && EOpenStatus.OPEN.equals(systemConfig.getStartEmailNotification())) {
-            if (StringUtils.isNotEmpty(systemConfig.getEmail())) {
-                log.info("发送友链申请邮件通知");
-                String feedback = "收到新的友链申请: " + "<br />"
-                        + "名称：" + linkVO.getTitle() + "<br />"
-                        + "简介：" + linkVO.getSummary() + "<br />"
-                        + "地址：" + linkVO.getUrl();
-                rabbitMqUtil.sendSimpleEmail(systemConfig.getEmail(), feedback);
-            } else {
-                log.error("网站没有配置通知接收的邮箱地址！");
-            }
-        }
+//        if (systemConfig != null && EOpenStatus.OPEN.equals(systemConfig.getStartEmailNotification())) {
+//            if (StringUtils.isNotEmpty(systemConfig.getEmail())) {
+//                log.info("发送友链申请邮件通知");
+//                String feedback = "收到新的友链申请: " + "<br />"
+//                        + "名称：" + linkVO.getTitle() + "<br />"
+//                        + "简介：" + linkVO.getSummary() + "<br />"
+//                        + "地址：" + linkVO.getUrl();
+//                rabbitMqUtil.sendSimpleEmail(systemConfig.getEmail(), feedback);
+//            } else {
+//                log.error("网站没有配置通知接收的邮箱地址！");
+//            }
+//        }
 
         QueryWrapper<Link> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq(SQLConf.USER_UID, userUid);
@@ -547,20 +550,20 @@ public class AuthRestApi {
         if (user != null && user.getCommentStatus() == SysConf.ZERO) {
             return ResultUtil.result(SysConf.ERROR, MessageConf.YOU_DONT_HAVE_PERMISSION_TO_FEEDBACK);
         }
-
-        // 判断是否开启邮件通知
-        SystemConfig systemConfig = systemConfigService.getConfig();
-        if (systemConfig != null && EOpenStatus.OPEN.equals(systemConfig.getStartEmailNotification())) {
-            if (StringUtils.isNotEmpty(systemConfig.getEmail())) {
-                log.info("发送反馈邮件通知");
-                String feedback = "网站收到新的反馈: " + "<br />"
-                        + "标题：" + feedbackVO.getTitle() + "<br />" + "<br />"
-                        + "内容" + feedbackVO.getContent();
-                rabbitMqUtil.sendSimpleEmail(systemConfig.getEmail(), feedback);
-            } else {
-                log.error("网站没有配置通知接收的邮箱地址！");
-            }
-        }
+//
+//        // 判断是否开启邮件通知
+//        SystemConfig systemConfig = systemConfigService.getConfig();
+//        if (systemConfig != null && EOpenStatus.OPEN.equals(systemConfig.getStartEmailNotification())) {
+//            if (StringUtils.isNotEmpty(systemConfig.getEmail())) {
+//                log.info("发送反馈邮件通知");
+//                String feedback = "网站收到新的反馈: " + "<br />"
+//                        + "标题：" + feedbackVO.getTitle() + "<br />" + "<br />"
+//                        + "内容" + feedbackVO.getContent();
+//                rabbitMqUtil.sendSimpleEmail(systemConfig.getEmail(), feedback);
+//            } else {
+//                log.error("网站没有配置通知接收的邮箱地址！");
+//            }
+//        }
 
         Feedback feedback = new Feedback();
         feedback.setUserUid(userUid);
