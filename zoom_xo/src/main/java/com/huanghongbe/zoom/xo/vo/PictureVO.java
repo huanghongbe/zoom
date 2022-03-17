@@ -1,5 +1,8 @@
 package com.huanghongbe.zoom.xo.vo;
 
+import com.huanghongbe.zoom.base.validator.group.GetList;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.base.vo.BaseVO;
 import lombok.Data;
 import lombok.ToString;
@@ -22,6 +25,7 @@ public class PictureVO extends BaseVO<PictureVO> {
     /**
      * 图片UIDs
      */
+    @NotBlank(groups = {Insert.class})
     private String fileUids;
 
     /**
@@ -32,5 +36,6 @@ public class PictureVO extends BaseVO<PictureVO> {
     /**
      * 所属相册分类UID
      */
+    @NotBlank(groups = {Insert.class, Update.class, GetList.class})
     private String pictureSortUid;
 }

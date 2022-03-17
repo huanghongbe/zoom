@@ -1,5 +1,8 @@
 package com.huanghongbe.zoom.xo.vo;
 
+import com.huanghongbe.zoom.base.validator.annotion.NotBlank;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.base.vo.BaseVO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,6 +18,7 @@ public class LinkVO extends BaseVO<LinkVO> {
     /**
      * 友链标题
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String title;
     /**
      * 友链介绍
@@ -23,6 +27,7 @@ public class LinkVO extends BaseVO<LinkVO> {
     /**
      * 友链地址
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String url;
 
     /**

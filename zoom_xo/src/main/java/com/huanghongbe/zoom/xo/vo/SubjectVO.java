@@ -1,5 +1,8 @@
 package com.huanghongbe.zoom.xo.vo;
 
+import com.huanghongbe.zoom.base.validator.annotion.NotBlank;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.base.vo.BaseVO;
 import lombok.Data;
 
@@ -13,6 +16,7 @@ public class SubjectVO extends BaseVO<SubjectVO>{
     /**
      * 专题名
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String subjectName;
 
     /**

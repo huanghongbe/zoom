@@ -1,5 +1,9 @@
 package com.huanghongbe.zoom.xo.vo;
 
+import com.huanghongbe.zoom.base.validator.annotion.IntegerNotNull;
+import com.huanghongbe.zoom.base.validator.annotion.NotBlank;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.base.vo.BaseVO;
 import com.huanghongbe.zoom.commons.entity.BlogSort;
 import com.huanghongbe.zoom.commons.entity.Tag;
@@ -18,6 +22,7 @@ public class BlogVO extends BaseVO<BlogVO> {
     /**
      * 博客标题
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String title;
 
     /**
@@ -28,15 +33,18 @@ public class BlogVO extends BaseVO<BlogVO> {
     /**
      * 博客内容
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String content;
 
     /**
      * 标签uid
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String tagUid;
     /**
      * 博客分类UID
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String blogSortUid;
     /**
      * 标题图片UID
@@ -49,14 +57,17 @@ public class BlogVO extends BaseVO<BlogVO> {
     /**
      * 是否发布
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String isPublish;
     /**
      * 是否原创
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String isOriginal;
     /**
      * 如果原创，作者为管理员名
      */
+    @NotBlank(groups = {Update.class})
     private String author;
     /**
      * 文章出处
@@ -70,11 +81,13 @@ public class BlogVO extends BaseVO<BlogVO> {
      * 3：三级推荐 ()
      * 4：四级 推荐 (特别推荐)
      */
+    @IntegerNotNull(groups = {Insert.class, Update.class})
     private Integer level;
 
     /**
      * 类型【0 博客， 1：推广】
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String type;
 
     /**
@@ -138,7 +151,7 @@ public class BlogVO extends BaseVO<BlogVO> {
     /**
      * 无参构造方法，初始化默认值
      */
-    public BlogVO() {
+    BlogVO() {
         this.level = 0;
         this.useSort = 0;
     }

@@ -1,5 +1,9 @@
 package com.huanghongbe.zoom.xo.vo;
 
+import com.huanghongbe.zoom.base.validator.annotion.IntegerNotNull;
+import com.huanghongbe.zoom.base.validator.annotion.NotBlank;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.base.vo.BaseVO;
 import lombok.Data;
 
@@ -15,16 +19,19 @@ public class CategoryMenuVO extends BaseVO<CategoryMenuVO> {
     /**
      * 菜单名称
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String name;
 
     /**
      * 菜单级别 （一级分类，二级分类）
      */
+    @IntegerNotNull(groups = {Insert.class, Update.class})
     private Integer menuLevel;
 
     /**
      * 菜单类型 （菜单，按钮）
      */
+    @IntegerNotNull(groups = {Insert.class, Update.class})
     private Integer menuType;
 
     /**
@@ -45,6 +52,7 @@ public class CategoryMenuVO extends BaseVO<CategoryMenuVO> {
     /**
      * URL地址
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String url;
 
     /**
@@ -55,11 +63,13 @@ public class CategoryMenuVO extends BaseVO<CategoryMenuVO> {
     /**
      * 是否显示  1: 是  0: 否
      */
+    @IntegerNotNull(groups = {Insert.class, Update.class})
     private Integer isShow;
 
     /**
      * 是否跳转外部URL，如果是，那么路由为外部的链接
      */
+    @IntegerNotNull(groups = {Insert.class, Update.class})
     private Integer isJumpExternalUrl;
 
 }

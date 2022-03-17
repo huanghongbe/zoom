@@ -18,7 +18,6 @@ import com.huanghongbe.zoom.xo.enums.RedisConf;
 import com.huanghongbe.zoom.xo.enums.SysConf;
 import com.huanghongbe.zoom.xo.service.BlogService;
 import com.huanghongbe.zoom.xo.utils.WebUtil;
-import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
@@ -27,8 +26,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -134,7 +131,7 @@ public class BlogContentRestApi {
 
 
     @GetMapping("/getSameBlogByBlogUid")
-    public String getSameBlogByBlogUid(@ApiParam(name = "blogUid", value = "博客标签UID", required = true) @RequestParam(name = "blogUid", required = true) String blogUid) {
+    public String getSameBlogByBlogUid(@RequestParam(name = "blogUid", required = true) String blogUid) {
         if (StringUtils.isEmpty(blogUid)) {
             return ResultUtil.result(SysConf.ERROR, MessageConf.PARAM_INCORRECT);
         }

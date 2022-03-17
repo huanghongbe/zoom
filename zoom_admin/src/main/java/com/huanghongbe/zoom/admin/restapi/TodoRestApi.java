@@ -3,6 +3,10 @@ package com.huanghongbe.zoom.admin.restapi;
 import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
+import com.huanghongbe.zoom.base.validator.group.Delete;
+import com.huanghongbe.zoom.base.validator.group.GetList;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.enums.SysConf;
 import com.huanghongbe.zoom.xo.service.TodoService;
@@ -10,6 +14,7 @@ import com.huanghongbe.zoom.xo.vo.TodoVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,7 +36,7 @@ public class TodoRestApi {
     private TodoService todoService;
     @AuthorityVerify
     @PostMapping("/getList")
-    public String getList(HttpServletRequest request, @RequestBody TodoVO todoVO, BindingResult result) {
+    public String getList(HttpServletRequest request, @Validated({GetList.class}) @RequestBody TodoVO todoVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -42,7 +47,7 @@ public class TodoRestApi {
     @AuthorityVerify
     @OperationLogger(value = "增加代办事项")
     @PostMapping("/add")
-    public String add(HttpServletRequest request, @RequestBody TodoVO todoVO, BindingResult result) {
+    public String add(HttpServletRequest request, @Validated({Insert.class})@RequestBody TodoVO todoVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -52,7 +57,7 @@ public class TodoRestApi {
     @AuthorityVerify
     @OperationLogger(value = "编辑代办事项")
     @PostMapping("/edit")
-    public String edit(HttpServletRequest request, @RequestBody TodoVO todoVO, BindingResult result) {
+    public String edit(HttpServletRequest request, @Validated({Update.class}) @RequestBody TodoVO todoVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -62,7 +67,7 @@ public class TodoRestApi {
     @AuthorityVerify
     @OperationLogger(value = "删除代办事项")
     @PostMapping("/delete")
-    public String delete(HttpServletRequest request, @RequestBody TodoVO todoVO, BindingResult result) {
+    public String delete(HttpServletRequest request, @Validated({Delete.class}) @RequestBody TodoVO todoVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);

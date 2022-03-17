@@ -3,6 +3,10 @@ import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.admin.annotion.AvoidRepeatableCommit.AvoidRepeatableCommit;
 import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
+import com.huanghongbe.zoom.base.validator.group.Delete;
+import com.huanghongbe.zoom.base.validator.group.GetList;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.service.RoleService;
 import com.huanghongbe.zoom.xo.vo.RoleVO;
@@ -29,7 +33,7 @@ public class RoleRestApi {
 
     @AuthorityVerify
     @PostMapping("/getList")
-    public String getList(@RequestBody RoleVO roleVO, BindingResult result) {
+    public String getList(@Validated({GetList.class})@RequestBody RoleVO roleVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -41,7 +45,7 @@ public class RoleRestApi {
     @AuthorityVerify
     @OperationLogger(value = "新增角色信息")
     @PostMapping("/add")
-    public String add(@RequestBody RoleVO roleVO, BindingResult result) {
+    public String add(@Validated({Insert.class})@RequestBody RoleVO roleVO, BindingResult result) {
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
         return roleService.addRole(roleVO);
@@ -50,7 +54,7 @@ public class RoleRestApi {
     @AuthorityVerify
     @OperationLogger(value = "更新角色信息")
     @PostMapping("/edit")
-    public String update(@RequestBody RoleVO roleVO, BindingResult result) {
+    public String update(@Validated({Update.class})@RequestBody RoleVO roleVO, BindingResult result) {
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
         return roleService.editRole(roleVO);
@@ -59,7 +63,7 @@ public class RoleRestApi {
     @AuthorityVerify
     @OperationLogger(value = "删除角色信息")
     @PostMapping("/delete")
-    public String delete(@RequestBody RoleVO roleVO, BindingResult result) {
+    public String delete(@Validated({Delete.class})@RequestBody RoleVO roleVO, BindingResult result) {
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
         return roleService.deleteRole(roleVO);

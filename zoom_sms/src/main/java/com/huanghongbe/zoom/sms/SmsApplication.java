@@ -17,7 +17,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @ComponentScan(basePackages = {
         "com.huanghongbe.zoom.utils",
         "com.huanghongbe.zoom.commons.config.feign",
-//        "com.huanghongbe.zoom.commons.fallback",
+        "com.huanghongbe.zoom.commons.fallback",
         "com.huanghongbe.zoom.sms",
 })
 public class SmsApplication {

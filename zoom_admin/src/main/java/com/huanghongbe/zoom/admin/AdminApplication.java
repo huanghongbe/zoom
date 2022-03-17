@@ -8,7 +8,6 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import springfox.documentation.oas.annotations.EnableOpenApi;
 
 import javax.annotation.PostConstruct;
 import java.util.TimeZone;
@@ -19,14 +18,13 @@ import java.util.TimeZone;
  */
 @EnableTransactionManagement
 @SpringBootApplication
-@EnableOpenApi
 @EnableDiscoveryClient
 @EnableCaching
 @EnableRabbit
 @EnableFeignClients("com.huanghongbe.zoom.commons.feign")
 @ComponentScan(basePackages = {
         "com.huanghongbe.zoom.commons.config",
-//        "com.huanghongbe.zoom.commons.fallback",
+        "com.huanghongbe.zoom.commons.fallback",
         "com.huanghongbe.zoom.utils",
         "com.huanghongbe.zoom.admin",
         "com.huanghongbe.zoom.xo.utils",

@@ -6,6 +6,10 @@ import com.huanghongbe.zoom.admin.annotion.AvoidRepeatableCommit.AvoidRepeatable
 import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
 import com.huanghongbe.zoom.admin.enums.SysConf;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
+import com.huanghongbe.zoom.base.validator.group.Delete;
+import com.huanghongbe.zoom.base.validator.group.GetList;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.commons.entity.PictureSort;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.service.PictureSortService;
@@ -13,6 +17,7 @@ import com.huanghongbe.zoom.xo.vo.PictureSortVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,7 +37,7 @@ public class PictureSortRestApi {
 
     @AuthorityVerify
     @PostMapping(value = "/getList")
-    public String getList(@RequestBody PictureSortVO pictureSortVO, BindingResult result) {
+    public String getList(@Validated({GetList.class})@RequestBody PictureSortVO pictureSortVO, BindingResult result) {
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
         log.info("获取图片分类列表: {}", pictureSortVO);
@@ -43,7 +48,7 @@ public class PictureSortRestApi {
     @AuthorityVerify
     @OperationLogger(value = "增加图片分类")
     @PostMapping("/add")
-    public String add(@RequestBody PictureSortVO pictureSortVO, BindingResult result) {
+    public String add(@Validated({Insert.class}) @RequestBody PictureSortVO pictureSortVO, BindingResult result) {
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
         log.info("增加图片分类: {}", pictureSortVO);
@@ -53,7 +58,7 @@ public class PictureSortRestApi {
     @AuthorityVerify
     @OperationLogger(value = "编辑图片分类")
     @PostMapping("/edit")
-    public String edit(@RequestBody PictureSortVO pictureSortVO, BindingResult result) {
+    public String edit(@Validated({Update.class})@RequestBody PictureSortVO pictureSortVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -64,7 +69,7 @@ public class PictureSortRestApi {
     @AuthorityVerify
     @OperationLogger(value = "删除图片分类")
     @PostMapping("/delete")
-    public String delete(@RequestBody PictureSortVO pictureSortVO, BindingResult result) {
+    public String delete(@Validated({Delete.class}) @RequestBody PictureSortVO pictureSortVO, BindingResult result) {
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
         log.info("删除图片分类: {}", pictureSortVO);
@@ -74,7 +79,7 @@ public class PictureSortRestApi {
     @AuthorityVerify
     @OperationLogger(value = "置顶分类")
     @PostMapping("/stick")
-    public String stick(@RequestBody PictureSortVO pictureSortVO, BindingResult result) {
+    public String stick(@Validated({Delete.class})@RequestBody PictureSortVO pictureSortVO, BindingResult result) {
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
         log.info("置顶图片分类: {}", pictureSortVO);
@@ -83,7 +88,7 @@ public class PictureSortRestApi {
 
     @OperationLogger(value = "通过Uid获取分类")
     @PostMapping("/getPictureSortByUid")
-    public String getPictureSortByUid(@RequestBody PictureSortVO pictureSortVO, BindingResult result) {
+    public String getPictureSortByUid(@Validated({Delete.class})@RequestBody PictureSortVO pictureSortVO, BindingResult result) {
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
         PictureSort pictureSort = pictureSortService.getById(pictureSortVO.getUid());

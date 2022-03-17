@@ -5,6 +5,10 @@ import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
 import com.huanghongbe.zoom.admin.enums.MessageConf;
 import com.huanghongbe.zoom.admin.enums.SysConf;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
+import com.huanghongbe.zoom.base.validator.group.Delete;
+import com.huanghongbe.zoom.base.validator.group.GetList;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.utils.StringUtils;
 import com.huanghongbe.zoom.xo.service.SysDictDataService;
@@ -12,6 +16,7 @@ import com.huanghongbe.zoom.xo.vo.SysDictDataVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -31,7 +36,7 @@ public class SysDictDataRestApi {
 
     @AuthorityVerify
     @PostMapping("/getList")
-    public String getList(@RequestBody SysDictDataVO sysDictDataVO, BindingResult result) {
+    public String getList(@Validated({GetList.class})@RequestBody SysDictDataVO sysDictDataVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -43,7 +48,7 @@ public class SysDictDataRestApi {
     @AuthorityVerify
     @OperationLogger(value = "增加字典数据")
     @PostMapping("/add")
-    public String add(HttpServletRequest request, @RequestBody SysDictDataVO sysDictDataVO, BindingResult result) {
+    public String add(@Validated({Insert.class})HttpServletRequest request, @RequestBody SysDictDataVO sysDictDataVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -53,7 +58,7 @@ public class SysDictDataRestApi {
     @AuthorityVerify
     @OperationLogger(value = "编辑字典数据")
     @PostMapping("/edit")
-    public String edit(HttpServletRequest request,@RequestBody SysDictDataVO sysDictDataVO, BindingResult result) {
+    public String edit(@Validated({Update.class})HttpServletRequest request, @RequestBody SysDictDataVO sysDictDataVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -63,7 +68,7 @@ public class SysDictDataRestApi {
     @AuthorityVerify
     @OperationLogger(value = "批量删除字典数据")
     @PostMapping("/deleteBatch")
-    public String delete(HttpServletRequest request,@RequestBody List<SysDictDataVO> sysDictDataVoList, BindingResult result) {
+    public String delete(@Validated({Delete.class})HttpServletRequest request, @RequestBody List<SysDictDataVO> sysDictDataVoList, BindingResult result) {
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
         return sysDictDataService.deleteBatchSysDictData(sysDictDataVoList);

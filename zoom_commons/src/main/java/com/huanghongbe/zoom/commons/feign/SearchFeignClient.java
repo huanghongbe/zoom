@@ -1,7 +1,7 @@
 package com.huanghongbe.zoom.commons.feign;
 
-import com.huanghongbe.zoom.commons.config.fallback.SearchFeignFallback;
 import com.huanghongbe.zoom.commons.config.feign.FeignConfiguration;
+import com.huanghongbe.zoom.commons.fallback.SearchFeignFallback;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -46,48 +46,5 @@ public interface SearchFeignClient {
      */
     @PostMapping("/search/addElasticSearchIndexByUid")
     String addElasticSearchIndexByUid(@RequestParam(required = true) String uid);
-
-
-    /**
-     * 通过博客uid删除Solr博客索引
-     *
-     * @param uid
-     * @return
-     */
-    @PostMapping("/search/deleteSolrIndexByUid")
-    String deleteSolrIndexByUid(@RequestParam(required = true) String uid);
-
-    /**
-     * 通过uids删除Solr博客索引
-     *
-     * @param uids
-     * @return
-     */
-    @PostMapping("/search/deleteSolrIndexByUids")
-    String deleteSolrIndexByUids(@RequestParam(required = true) String uids);
-
-    /**
-     * 初始化Solr索引
-     *
-     * @return
-     */
-    @PostMapping("/search/initSolrIndex")
-    String initSolrIndex();
-
-    /**
-     * 通过uid来增加Solr索引
-     *
-     * @return
-     */
-    @PostMapping("/search/addSolrIndexByUid")
-    String addSolrIndexByUid(@RequestParam(required = true) String uid);
-
-    /**
-     * 通过uid来更新Solr索引
-     *
-     * @return
-     */
-    @PostMapping("/search/updateSolrIndexByUid")
-    String updateSolrIndexByUid(@RequestParam(required = true) String uid);
 
 }

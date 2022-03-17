@@ -4,11 +4,13 @@ import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.admin.annotion.AvoidRepeatableCommit.AvoidRepeatableCommit;
 import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
+import com.huanghongbe.zoom.base.validator.group.Delete;
+import com.huanghongbe.zoom.base.validator.group.GetList;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.service.SysParamsService;
 import com.huanghongbe.zoom.xo.vo.SysParamsVO;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
@@ -35,7 +37,7 @@ public class SysParamsRestApi {
 
     @AuthorityVerify
     @PostMapping("/getList")
-    public String getList(@RequestBody SysParamsVO SysParamsVO, BindingResult result) {
+    public String getList(@Validated({GetList.class})@RequestBody SysParamsVO SysParamsVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -47,7 +49,7 @@ public class SysParamsRestApi {
     @AuthorityVerify
     @OperationLogger(value = "增加参数配置")
     @PostMapping("/add")
-    public String add(@RequestBody SysParamsVO sysParamsVO, BindingResult result) {
+    public String add(@Validated({Insert.class})@RequestBody SysParamsVO sysParamsVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -57,7 +59,7 @@ public class SysParamsRestApi {
     @AuthorityVerify
     @OperationLogger(value = "编辑参数配置")
     @PostMapping("/edit")
-    public String edit(HttpServletRequest request, @RequestBody SysParamsVO SysParamsVO, BindingResult result) {
+    public String edit(HttpServletRequest request, @Validated({Update.class}) @RequestBody SysParamsVO SysParamsVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -67,7 +69,7 @@ public class SysParamsRestApi {
     @AuthorityVerify
     @OperationLogger(value = "批量删除参数配置")
     @PostMapping("/deleteBatch")
-    public String delete(@RequestBody List<SysParamsVO> SysParamsVoList, BindingResult result) {
+    public String delete(@Validated({Delete.class})@RequestBody List<SysParamsVO> SysParamsVoList, BindingResult result) {
         return sysParamsService.deleteBatchSysParams(SysParamsVoList);
     }
 }

@@ -5,11 +5,13 @@ import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.admin.annotion.AvoidRepeatableCommit.AvoidRepeatableCommit;
 import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
+import com.huanghongbe.zoom.base.validator.group.Delete;
+import com.huanghongbe.zoom.base.validator.group.GetList;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.service.LinkService;
 import com.huanghongbe.zoom.xo.vo.LinkVO;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
@@ -24,7 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
  *
  */
 @RestController
-@Api(value = "友情链接相关接口", tags = {"友情链接相关接口"})
 @RequestMapping("/link")
 @Slf4j
 public class LinkRestApi {
@@ -34,7 +35,7 @@ public class LinkRestApi {
 
     @AuthorityVerify
     @PostMapping("/getList")
-    public String getList(@RequestBody LinkVO linkVO, BindingResult result) {
+    public String getList(@Validated({GetList.class}) @RequestBody LinkVO linkVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -46,7 +47,7 @@ public class LinkRestApi {
     @AuthorityVerify
     @OperationLogger(value = "增加友链")
     @PostMapping("/add")
-    public String add(@RequestBody LinkVO linkVO, BindingResult result) {
+    public String add(@Validated({Insert.class})@RequestBody LinkVO linkVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -56,7 +57,7 @@ public class LinkRestApi {
     @AuthorityVerify
     @OperationLogger(value = "编辑友链")
     @PostMapping("/edit")
-    public String edit(@RequestBody LinkVO linkVO, BindingResult result) {
+    public String edit(@Validated({Update.class})@RequestBody LinkVO linkVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -66,7 +67,7 @@ public class LinkRestApi {
     @AuthorityVerify
     @OperationLogger(value = "删除友链")
     @PostMapping("/delete")
-    public String delete(@RequestBody LinkVO linkVO, BindingResult result) {
+    public String delete(@Validated({Delete.class})@RequestBody LinkVO linkVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);

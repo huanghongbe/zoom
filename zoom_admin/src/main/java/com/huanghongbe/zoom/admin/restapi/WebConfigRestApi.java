@@ -3,11 +3,10 @@ package com.huanghongbe.zoom.admin.restapi;
 
 import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.service.WebConfigService;
 import com.huanghongbe.zoom.xo.vo.WebConfigVO;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
@@ -35,7 +34,7 @@ public class WebConfigRestApi {
     @AuthorityVerify
     @OperationLogger(value = "修改网站配置")
     @PostMapping("/editWebConfig")
-    public String editWebConfig(@RequestBody WebConfigVO webConfigVO, BindingResult result) {
+    public String editWebConfig(@Validated({Update.class})@RequestBody WebConfigVO webConfigVO, BindingResult result) {
         return webConfigService.editWebConfig(webConfigVO);
     }
 }

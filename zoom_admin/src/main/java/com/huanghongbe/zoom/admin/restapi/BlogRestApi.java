@@ -3,12 +3,17 @@ import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.admin.annotion.AvoidRepeatableCommit.AvoidRepeatableCommit;
 import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
+import com.huanghongbe.zoom.base.validator.group.Delete;
+import com.huanghongbe.zoom.base.validator.group.GetList;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.service.BlogService;
 import com.huanghongbe.zoom.xo.vo.BlogVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,7 +38,7 @@ public class BlogRestApi {
 
     @AuthorityVerify
     @PostMapping("/getList")
-    public String getList(@RequestBody BlogVO blogVO, BindingResult result) {
+    public String getList(@Validated({GetList.class}) @RequestBody BlogVO blogVO, BindingResult result) {
 
         ThrowableUtils.checkParamArgument(result);
         return ResultUtil.successWithData(blogService.getPageList(blogVO));
@@ -43,7 +48,7 @@ public class BlogRestApi {
     @AuthorityVerify
     @OperationLogger(value = "增加博客")
     @PostMapping("/add")
-    public String add(@RequestBody BlogVO blogVO, BindingResult result) {
+    public String add(@Validated({Insert.class}) @RequestBody BlogVO blogVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -61,7 +66,7 @@ public class BlogRestApi {
     @AuthorityVerify
     @OperationLogger(value = "编辑博客")
     @PostMapping("/edit")
-    public String edit(@RequestBody BlogVO blogVO, BindingResult result) {
+    public String edit(@Validated({Update.class}) @RequestBody BlogVO blogVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -78,7 +83,7 @@ public class BlogRestApi {
     @AuthorityVerify
     @OperationLogger(value = "删除博客")
     @PostMapping("/delete")
-    public String delete(@RequestBody BlogVO blogVO, BindingResult result) {
+    public String delete(@Validated({Delete.class}) @RequestBody BlogVO blogVO, BindingResult result) {
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
         return blogService.deleteBlog(blogVO);

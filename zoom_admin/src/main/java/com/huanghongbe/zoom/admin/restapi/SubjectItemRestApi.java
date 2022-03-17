@@ -4,12 +4,17 @@ import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.admin.annotion.AvoidRepeatableCommit.AvoidRepeatableCommit;
 import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
+import com.huanghongbe.zoom.base.validator.group.Delete;
+import com.huanghongbe.zoom.base.validator.group.GetList;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.service.SubjectItemService;
 import com.huanghongbe.zoom.xo.vo.SubjectItemVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,7 +33,7 @@ public class SubjectItemRestApi {
 
     @AuthorityVerify
     @PostMapping("/getList")
-    public String getList(@RequestBody SubjectItemVO subjectItemVO, BindingResult result) {
+    public String getList(@Validated({GetList.class}) @RequestBody SubjectItemVO subjectItemVO, BindingResult result) {
         ThrowableUtils.checkParamArgument(result);
         return ResultUtil.successWithData(subjectItemService.getPageList(subjectItemVO));
     }
@@ -37,7 +42,7 @@ public class SubjectItemRestApi {
     @AuthorityVerify
     @OperationLogger(value = "增加专题Item")
     @PostMapping("/add")
-    public String add(@RequestBody List<SubjectItemVO> subjectItemVOList, BindingResult result) {
+    public String add(@Validated({Insert.class}) @RequestBody List<SubjectItemVO> subjectItemVOList, BindingResult result) {
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
         return subjectItemService.addSubjectItemList(subjectItemVOList);
@@ -46,7 +51,7 @@ public class SubjectItemRestApi {
     @AuthorityVerify
     @OperationLogger(value = "编辑专题Item")
     @PostMapping("/edit")
-    public String edit(@RequestBody List<SubjectItemVO> subjectItemVOList, BindingResult result) {
+    public String edit(@Validated({Update.class}) @RequestBody List<SubjectItemVO> subjectItemVOList, BindingResult result) {
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
         return subjectItemService.editSubjectItemList(subjectItemVOList);
@@ -55,7 +60,7 @@ public class SubjectItemRestApi {
     @AuthorityVerify
     @OperationLogger(value = "批量删除专题Item")
     @PostMapping("/deleteBatch")
-    public String delete(@RequestBody List<SubjectItemVO> subjectItemVOList, BindingResult result) {
+    public String delete(@Validated({Delete.class}) @RequestBody List<SubjectItemVO> subjectItemVOList, BindingResult result) {
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
         return subjectItemService.deleteBatchSubjectItem(subjectItemVOList);

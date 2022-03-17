@@ -2,12 +2,13 @@ package com.huanghongbe.zoom.admin.restapi;
 
 import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.service.SystemConfigService;
 import com.huanghongbe.zoom.xo.vo.SystemConfigVO;
-import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -39,7 +40,7 @@ public class SystemConfigRestApi {
     @AuthorityVerify
     @OperationLogger(value = "修改系统配置")
     @PostMapping("/editSystemConfig")
-    public String editSystemConfig(@RequestBody SystemConfigVO systemConfigVO) {
+    public String editSystemConfig(@Validated({Update.class})@RequestBody SystemConfigVO systemConfigVO) {
         return systemConfigService.editSystemConfig(systemConfigVO);
     }
 }

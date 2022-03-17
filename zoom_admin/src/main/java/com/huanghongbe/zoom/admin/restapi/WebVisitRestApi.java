@@ -3,6 +3,7 @@ package com.huanghongbe.zoom.admin.restapi;
 import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.admin.enums.SysConf;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
+import com.huanghongbe.zoom.base.validator.group.GetList;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.service.WebVisitService;
 import com.huanghongbe.zoom.xo.vo.WebVisitVO;
@@ -29,7 +30,7 @@ public class WebVisitRestApi {
 
     @AuthorityVerify
     @PostMapping("/getList")
-    public String getList(@RequestBody WebVisitVO webVisitVO, BindingResult result) {
+    public String getList(@Validated({GetList.class})@RequestBody WebVisitVO webVisitVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);

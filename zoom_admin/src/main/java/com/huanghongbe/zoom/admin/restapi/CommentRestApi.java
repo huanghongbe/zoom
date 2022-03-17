@@ -4,6 +4,10 @@ import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.admin.annotion.AvoidRepeatableCommit.AvoidRepeatableCommit;
 import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
+import com.huanghongbe.zoom.base.validator.group.Delete;
+import com.huanghongbe.zoom.base.validator.group.GetList;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.service.CommentService;
 import com.huanghongbe.zoom.xo.vo.CommentVO;
@@ -32,7 +36,7 @@ public class CommentRestApi {
 
     @AuthorityVerify
     @PostMapping(value = "/getList")
-    public String getList(@RequestBody CommentVO commentVO, BindingResult result) {
+    public String getList(@Validated({GetList.class}) @RequestBody CommentVO commentVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -43,7 +47,7 @@ public class CommentRestApi {
     @AvoidRepeatableCommit
     @AuthorityVerify
     @PostMapping("/add")
-    public String add(@RequestBody CommentVO commentVO, BindingResult result) {
+    public String add(@Validated({Insert.class}) @RequestBody CommentVO commentVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -53,7 +57,7 @@ public class CommentRestApi {
 
     @AuthorityVerify
     @PostMapping("/edit")
-    public String edit(@RequestBody CommentVO commentVO, BindingResult result) {
+    public String edit(@Validated({Update.class})@RequestBody CommentVO commentVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -63,7 +67,7 @@ public class CommentRestApi {
 
     @AuthorityVerify
     @PostMapping("/delete")
-    public String delete(@RequestBody CommentVO commentVO, BindingResult result) {
+    public String delete(@Validated({Delete.class})@RequestBody CommentVO commentVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -74,7 +78,7 @@ public class CommentRestApi {
     @AuthorityVerify
     @OperationLogger(value = "删除选中评论")
     @PostMapping("/deleteBatch")
-    public String deleteBatch(@RequestBody List<CommentVO> commentVoList, BindingResult result) {
+    public String deleteBatch(@Validated({Delete.class})@RequestBody List<CommentVO> commentVoList, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);

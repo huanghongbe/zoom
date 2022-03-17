@@ -35,7 +35,6 @@ public class HandlerExceptionResolver implements org.springframework.web.servlet
         if (response.isCommitted()) {
             return new ModelAndView();
         }
-
         // 组装错误提示信息
         String errorCode = ErrorCode.ERROR;
         String message = BaseMessageConf.OPERATION_FAIL;
@@ -74,10 +73,8 @@ public class HandlerExceptionResolver implements org.springframework.web.servlet
             message = exception.getMessage();
             log.error(exception.getMessage());
         }
-
         // 响应类型设置
         response.setContentType(MediaType.APPLICATION_JSON_UTF8_VALUE);
-
         // 响应结果输出
         try (PrintWriter writer = response.getWriter()) {
             writer.write(ResultUtil.resultWithMessage(errorCode, message));

@@ -10,7 +10,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import springfox.documentation.oas.annotations.EnableOpenApi;
 
 import javax.annotation.PostConstruct;
 import java.util.TimeZone;
@@ -24,13 +23,12 @@ import java.util.TimeZone;
 @EnableScheduling
 @EnableTransactionManagement
 @SpringBootApplication
-@EnableOpenApi
 @EnableDiscoveryClient
 @EnableAsync
 @EnableFeignClients("com.huanghongbe.zoom.commons.feign")
 @ComponentScan(basePackages = {
         "com.huanghongbe.zoom.commons.config",
-//        "com.huanghongbe.zoom.commons.fallback",
+        "com.huanghongbe.zoom.commons.fallback",
         "com.huanghongbe.zoom.utils",
         "com.huanghongbe.zoom.xo.utils",
         "com.huanghongbe.zoom.web",

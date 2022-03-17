@@ -4,6 +4,7 @@ package com.huanghongbe.zoom.admin.restapi;
 import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.admin.enums.SysConf;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
+import com.huanghongbe.zoom.base.validator.group.GetList;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.service.ExceptionLogService;
 import com.huanghongbe.zoom.xo.service.SysLogService;
@@ -34,7 +35,7 @@ public class LogRestApi {
 
     @AuthorityVerify
     @PostMapping(value = "/getLogList")
-    public String getLogList(@RequestBody SysLogVO sysLogVO, BindingResult result) {
+    public String getLogList(@Validated({GetList.class})@RequestBody SysLogVO sysLogVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -43,7 +44,7 @@ public class LogRestApi {
 
     @AuthorityVerify
     @PostMapping(value = "/getExceptionList")
-    public String getExceptionList(@RequestBody ExceptionLogVO exceptionLogVO, BindingResult result) {
+    public String getExceptionList(@Validated({GetList.class}) @RequestBody ExceptionLogVO exceptionLogVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);

@@ -2,8 +2,8 @@ package com.huanghongbe.zoom.commons.feign;
 
 
 import com.huanghongbe.zoom.base.vo.FileVO;
-import com.huanghongbe.zoom.commons.config.fallback.PictureFeignFallback;
 import com.huanghongbe.zoom.commons.config.feign.FeignConfiguration;
+import com.huanghongbe.zoom.commons.fallback.PictureFeignFallback;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;

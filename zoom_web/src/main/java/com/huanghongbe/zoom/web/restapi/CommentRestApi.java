@@ -7,6 +7,8 @@ import com.huanghongbe.zoom.base.exception.ThrowableUtils;
 import com.huanghongbe.zoom.base.global.BaseSysConf;
 import com.huanghongbe.zoom.base.global.Constants;
 import com.huanghongbe.zoom.base.holder.RequestHolder;
+import com.huanghongbe.zoom.base.validator.group.GetList;
+import com.huanghongbe.zoom.base.validator.group.Insert;
 import com.huanghongbe.zoom.commons.entity.*;
 import com.huanghongbe.zoom.commons.feign.PictureFeignClient;
 import com.huanghongbe.zoom.utils.FileUtils;
@@ -23,8 +25,6 @@ import com.huanghongbe.zoom.xo.utils.RabbitMqUtil;
 import com.huanghongbe.zoom.xo.utils.WebUtil;
 import com.huanghongbe.zoom.xo.vo.CommentVO;
 import com.huanghongbe.zoom.xo.vo.UserVO;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -96,7 +96,7 @@ public class CommentRestApi {
      * @return
      */
     @PostMapping("/getList")
-    public String getList(@RequestBody CommentVO commentVO, BindingResult result) {
+    public String getList(@Validated({GetList.class})@RequestBody CommentVO commentVO, BindingResult result) {
 
         ThrowableUtils.checkParamArgument(result);
         QueryWrapper<Comment> queryWrapper = new QueryWrapper<>();
@@ -219,7 +219,7 @@ public class CommentRestApi {
 
 
     @PostMapping("/getListByUser")
-    public String getListByUser(HttpServletRequest request,@RequestBody UserVO userVO) {
+    public String getListByUser(HttpServletRequest request,@Validated({GetList.class})@RequestBody UserVO userVO) {
 
         if (request.getAttribute(SysConf.USER_UID) == null) {
             return ResultUtil.result(SysConf.ERROR, MessageConf.INVALID_TOKEN);
@@ -328,8 +328,8 @@ public class CommentRestApi {
      * @return
      */
     @PostMapping("/getPraiseListByUser")
-    public String getPraiseListByUser(@ApiParam(name = "currentPage", value = "当前页数", required = false) @RequestParam(name = "currentPage", required = false, defaultValue = "1") Long currentPage,
-                                      @ApiParam(name = "pageSize", value = "每页显示数目", required = false) @RequestParam(name = "pageSize", required = false, defaultValue = "10") Long pageSize) {
+    public String getPraiseListByUser(@RequestParam(name = "currentPage", required = false, defaultValue = "1") Long currentPage,
+                                      @RequestParam(name = "pageSize", required = false, defaultValue = "10") Long pageSize) {
         HttpServletRequest request = RequestHolder.getRequest();
         if (request.getAttribute(SysConf.USER_UID) == null || request.getAttribute(SysConf.TOKEN) == null) {
             return ResultUtil.result(SysConf.ERROR, MessageConf.INVALID_TOKEN);
@@ -370,7 +370,7 @@ public class CommentRestApi {
 
     @BussinessLog(value = "发表评论", behavior = EBehavior.PUBLISH_COMMENT)
     @PostMapping("/add")
-    public String add( @RequestBody CommentVO commentVO, BindingResult result) {
+    public String add(@Validated({Insert.class})@RequestBody CommentVO commentVO, BindingResult result) {
         ThrowableUtils.checkParamArgument(result);
         HttpServletRequest request = RequestHolder.getRequest();
         if (request.getAttribute(SysConf.USER_UID) == null) {

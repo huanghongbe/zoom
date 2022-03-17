@@ -1,4 +1,5 @@
-package com.huanghongbe.zoom.commons.config.fallback;
+package com.huanghongbe.zoom.commons.fallback;
+
 
 import com.huanghongbe.zoom.base.holder.RequestHolder;
 import com.huanghongbe.zoom.base.vo.FileVO;
@@ -17,7 +18,6 @@ import java.util.List;
 @Component
 @Slf4j
 public class PictureFeignFallback implements PictureFeignClient {
-
 
     @Override
     public String getPicture(String fileIds, String code) {

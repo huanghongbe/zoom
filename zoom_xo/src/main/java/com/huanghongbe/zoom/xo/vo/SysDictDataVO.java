@@ -1,5 +1,9 @@
 package com.huanghongbe.zoom.xo.vo;
 
+import com.huanghongbe.zoom.base.validator.annotion.IntegerNotNull;
+import com.huanghongbe.zoom.base.validator.annotion.NotBlank;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.base.vo.BaseVO;
 import lombok.Data;
 
@@ -12,7 +16,6 @@ import lombok.Data;
 @Data
 public class SysDictDataVO extends BaseVO<SysDictDataVO> {
 
-
     /**
      * 自增键 oid
      */
@@ -21,16 +24,19 @@ public class SysDictDataVO extends BaseVO<SysDictDataVO> {
     /**
      * 字典标签
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String dictLabel;
 
     /**
      * 字典键值
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String dictValue;
 
     /**
      * 字典类型UID
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String dictTypeUid;
 
     /**
@@ -46,11 +52,13 @@ public class SysDictDataVO extends BaseVO<SysDictDataVO> {
     /**
      * 是否默认（1是 0否）,默认为0
      */
+    @IntegerNotNull(groups = {Insert.class, Update.class})
     private Integer isDefault;
 
     /**
      * 是否发布  1：是，0:否，默认为0
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String isPublish;
 
     /**
@@ -61,6 +69,7 @@ public class SysDictDataVO extends BaseVO<SysDictDataVO> {
     /**
      * 排序字段
      */
+    @IntegerNotNull(groups = {Insert.class, Update.class})
     private Integer sort;
 
 }

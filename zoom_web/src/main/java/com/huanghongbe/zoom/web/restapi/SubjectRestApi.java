@@ -1,6 +1,7 @@
 package com.huanghongbe.zoom.web.restapi;
 
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
+import com.huanghongbe.zoom.base.validator.group.GetList;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.enums.SysConf;
 import com.huanghongbe.zoom.xo.service.SubjectItemService;
@@ -33,14 +34,14 @@ public class SubjectRestApi {
     SubjectItemService subjectItemService;
 
     @PostMapping("/getList")
-    public String getList(@RequestBody SubjectVO subjectVO, BindingResult result) {
+    public String getList(@Validated({GetList.class})@RequestBody SubjectVO subjectVO, BindingResult result) {
 
         ThrowableUtils.checkParamArgument(result);
         return ResultUtil.result(SysConf.SUCCESS, subjectService.getPageList(subjectVO));
     }
 
     @PostMapping("/getItemList")
-    public String getItemList(@RequestBody SubjectItemVO subjectItemVO, BindingResult result) {
+    public String getItemList(@Validated({GetList.class})@RequestBody SubjectItemVO subjectItemVO, BindingResult result) {
 
         ThrowableUtils.checkParamArgument(result);
         return ResultUtil.result(SysConf.SUCCESS, subjectItemService.getPageList(subjectItemVO));

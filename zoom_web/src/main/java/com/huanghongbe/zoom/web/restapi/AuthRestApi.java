@@ -99,12 +99,6 @@ public class AuthRestApi {
     private String PROJECT_NAME_EN;
     @Value(value = "${DEFAULE_PWD}")
     private String DEFAULE_PWD;
-//    @Value(value = "${uniapp.qq.appid}")
-//    private String APP_ID;
-//    @Value(value = "${uniapp.qq.appid}")
-//    private String SECRET;
-//    @Value(value = "${uniapp.qq.grant_type}")
-//    private String GRANT_TYPE;
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;

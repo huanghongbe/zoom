@@ -4,6 +4,10 @@ import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.admin.annotion.AvoidRepeatableCommit.AvoidRepeatableCommit;
 import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
+import com.huanghongbe.zoom.base.validator.group.Delete;
+import com.huanghongbe.zoom.base.validator.group.GetList;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.service.WebNavbarService;
 import com.huanghongbe.zoom.xo.vo.WebNavbarVO;
@@ -27,7 +31,7 @@ public class WebNavbarRestApi {
 
     @AuthorityVerify
     @GetMapping("/getList")
-    public String getList(@RequestBody WebNavbarVO webNavbarVO, BindingResult result) {
+    public String getList(@Validated({GetList.class})@RequestBody WebNavbarVO webNavbarVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -43,7 +47,7 @@ public class WebNavbarRestApi {
     @AuthorityVerify
     @OperationLogger(value = "增加门户导航栏")
     @PostMapping("/add")
-    public String add(@RequestBody WebNavbarVO webNavbarVO, BindingResult result) {
+    public String add(@Validated({Insert.class})@RequestBody WebNavbarVO webNavbarVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -54,7 +58,7 @@ public class WebNavbarRestApi {
     @AuthorityVerify
     @OperationLogger(value = "编辑门户导航栏")
     @PostMapping("/edit")
-    public String edit(@RequestBody WebNavbarVO webNavbarVO, BindingResult result) {
+    public String edit(@Validated({Update.class})@RequestBody WebNavbarVO webNavbarVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -65,7 +69,7 @@ public class WebNavbarRestApi {
     @AuthorityVerify
     @OperationLogger(value = "删除门户导航栏")
     @PostMapping("/delete")
-    public String delete(@RequestBody WebNavbarVO webNavbarVO, BindingResult result) {
+    public String delete(@Validated({Delete.class})@RequestBody WebNavbarVO webNavbarVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);

@@ -3,6 +3,10 @@ package com.huanghongbe.zoom.admin.restapi;
 import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
+import com.huanghongbe.zoom.base.validator.group.Delete;
+import com.huanghongbe.zoom.base.validator.group.GetList;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.service.UserService;
 import com.huanghongbe.zoom.xo.vo.UserVO;
@@ -29,7 +33,7 @@ public class UserRestApi {
 
     @AuthorityVerify
     @PostMapping("/getList")
-    public String getList(@RequestBody UserVO userVO, BindingResult result) {
+    public String getList(@Validated({GetList.class})@RequestBody UserVO userVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -40,7 +44,7 @@ public class UserRestApi {
     @AuthorityVerify
     @OperationLogger(value = "新增用户")
     @PostMapping("/add")
-    public String add(@RequestBody UserVO userVO, BindingResult result) {
+    public String add(@Validated({Insert.class})@RequestBody UserVO userVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -51,7 +55,7 @@ public class UserRestApi {
     @AuthorityVerify
     @OperationLogger(value = "编辑用户")
     @PostMapping("/edit")
-    public String edit(@RequestBody UserVO userVO, BindingResult result) {
+    public String edit(@Validated({Update.class})@RequestBody UserVO userVO, BindingResult result) {
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
         log.info("编辑用户: {}", userVO);
@@ -61,7 +65,7 @@ public class UserRestApi {
     @AuthorityVerify
     @OperationLogger(value = "删除用户")
     @PostMapping("/delete")
-    public String delete(@RequestBody UserVO userVO, BindingResult result) {
+    public String delete(@Validated({Delete.class})@RequestBody UserVO userVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);

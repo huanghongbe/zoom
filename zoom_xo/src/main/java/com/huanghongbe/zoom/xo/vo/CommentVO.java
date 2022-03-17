@@ -1,5 +1,9 @@
 package com.huanghongbe.zoom.xo.vo;
 
+import com.huanghongbe.zoom.base.validator.annotion.NotBlank;
+import com.huanghongbe.zoom.base.validator.group.GetList;
+import com.huanghongbe.zoom.base.validator.group.GetOne;
+import com.huanghongbe.zoom.base.validator.group.Insert;
 import com.huanghongbe.zoom.base.vo.BaseVO;
 import lombok.Data;
 import lombok.ToString;
@@ -15,6 +19,7 @@ public class CommentVO extends BaseVO<CommentVO> {
     /**
      * 用户uid
      */
+    @NotBlank(groups = {Insert.class, GetOne.class})
     private String userUid;
 
     /**
@@ -40,6 +45,7 @@ public class CommentVO extends BaseVO<CommentVO> {
     /**
      * 评论内容
      */
+    @NotBlank(groups = {Insert.class})
     private String content;
 
     /**
@@ -50,5 +56,6 @@ public class CommentVO extends BaseVO<CommentVO> {
     /**
      * 评论来源： MESSAGE_BOARD，ABOUT，BLOG_INFO 等
      */
+    @NotBlank(groups = {Insert.class, GetList.class})
     private String source;
 }

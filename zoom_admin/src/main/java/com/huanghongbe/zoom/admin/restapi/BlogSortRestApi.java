@@ -3,13 +3,17 @@ import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.admin.annotion.AvoidRepeatableCommit.AvoidRepeatableCommit;
 import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
+import com.huanghongbe.zoom.base.validator.group.Delete;
+import com.huanghongbe.zoom.base.validator.group.GetList;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.service.BlogSortService;
 import com.huanghongbe.zoom.xo.vo.BlogSortVO;
-import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,7 +35,7 @@ public class BlogSortRestApi {
 
     @AuthorityVerify
     @PostMapping("/getList")
-    public String getList(@RequestBody BlogSortVO blogSortVO, BindingResult result) {
+    public String getList(@Validated({GetList.class}) @RequestBody BlogSortVO blogSortVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -43,7 +47,7 @@ public class BlogSortRestApi {
     @AuthorityVerify
     @OperationLogger(value = "增加博客分类")
     @PostMapping("/add")
-    public String add(@RequestBody BlogSortVO blogSortVO, BindingResult result) {
+    public String add(@Validated({Insert.class}) @RequestBody BlogSortVO blogSortVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -54,7 +58,7 @@ public class BlogSortRestApi {
     @AuthorityVerify
     @OperationLogger(value = "编辑博客分类")
     @PostMapping("/edit")
-    public String edit(@RequestBody BlogSortVO blogSortVO, BindingResult result) {
+    public String edit(@Validated({Update.class}) @RequestBody BlogSortVO blogSortVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -65,7 +69,7 @@ public class BlogSortRestApi {
     @AuthorityVerify
     @OperationLogger(value = "批量删除博客分类")
     @PostMapping("/deleteBatch")
-    public String delete(@RequestBody List<BlogSortVO> blogSortVoList, BindingResult result) {
+    public String delete(@Validated({Delete.class}) @RequestBody List<BlogSortVO> blogSortVoList, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -74,9 +78,8 @@ public class BlogSortRestApi {
     }
 
     @AuthorityVerify
-    @ApiOperation(value = "置顶分类", notes = "置顶分类", response = String.class)
     @PostMapping("/stick")
-    public String stick(@RequestBody BlogSortVO blogSortVO, BindingResult result) {
+    public String stick(@Validated({Delete.class}) @RequestBody BlogSortVO blogSortVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);

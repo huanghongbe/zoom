@@ -1,5 +1,8 @@
 package com.huanghongbe.zoom.xo.vo;
 
+import com.huanghongbe.zoom.base.validator.annotion.IntegerNotNull;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.base.vo.BaseVO;
 import lombok.Data;
 import lombok.ToString;
@@ -35,5 +38,6 @@ public class PictureSortVO extends BaseVO<PictureSortVO> {
     /**
      * 是否显示  1: 是  0: 否
      */
+    @IntegerNotNull(groups = {Insert.class, Update.class})
     private Integer isShow;
 }

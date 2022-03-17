@@ -4,6 +4,10 @@ import com.huanghongbe.zoom.admin.annotion.AuthorityVerify.AuthorityVerify;
 import com.huanghongbe.zoom.admin.annotion.AvoidRepeatableCommit.AvoidRepeatableCommit;
 import com.huanghongbe.zoom.admin.annotion.OperationLogger.OperationLogger;
 import com.huanghongbe.zoom.base.exception.ThrowableUtils;
+import com.huanghongbe.zoom.base.validator.group.Delete;
+import com.huanghongbe.zoom.base.validator.group.GetList;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.utils.ResultUtil;
 import com.huanghongbe.zoom.xo.service.CategoryMenuService;
 import com.huanghongbe.zoom.xo.vo.CategoryMenuVO;
@@ -28,7 +32,7 @@ public class CategoryMenuRestApi {
 
     @AuthorityVerify
     @RequestMapping(value = "/getList", method = RequestMethod.GET)
-    public String getList(@RequestBody CategoryMenuVO categoryMenuVO, BindingResult result) {
+    public String getList(@Validated({GetList.class}) @RequestBody CategoryMenuVO categoryMenuVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
@@ -50,7 +54,7 @@ public class CategoryMenuRestApi {
     @AuthorityVerify
     @OperationLogger(value = "增加菜单")
     @PostMapping("/add")
-    public String add(@RequestBody CategoryMenuVO categoryMenuVO, BindingResult result) {
+    public String add(@Validated({Insert.class})@RequestBody CategoryMenuVO categoryMenuVO, BindingResult result) {
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
         return categoryMenuService.addCategoryMenu(categoryMenuVO);
@@ -58,7 +62,7 @@ public class CategoryMenuRestApi {
 
     @AuthorityVerify
     @PostMapping("/edit")
-    public String edit(@RequestBody CategoryMenuVO categoryMenuVO, BindingResult result) {
+    public String edit(@Validated({Update.class})@RequestBody CategoryMenuVO categoryMenuVO, BindingResult result) {
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
         return categoryMenuService.editCategoryMenu(categoryMenuVO);
@@ -67,7 +71,7 @@ public class CategoryMenuRestApi {
     @AuthorityVerify
     @OperationLogger(value = "删除菜单")
     @PostMapping("/delete")
-    public String delete(@RequestBody CategoryMenuVO categoryMenuVO, BindingResult result) {
+    public String delete(@Validated({Delete.class}) @RequestBody CategoryMenuVO categoryMenuVO, BindingResult result) {
         // 参数校验
         ThrowableUtils.checkParamArgument(result);
         return categoryMenuService.deleteCategoryMenu(categoryMenuVO);
@@ -80,7 +84,7 @@ public class CategoryMenuRestApi {
     @AuthorityVerify
     @OperationLogger(value = "置顶菜单")
     @PostMapping("/stick")
-    public String stick(@RequestBody CategoryMenuVO categoryMenuVO, BindingResult result) {
+    public String stick(@Validated({Delete.class}) @RequestBody CategoryMenuVO categoryMenuVO, BindingResult result) {
 
         // 参数校验
         ThrowableUtils.checkParamArgument(result);

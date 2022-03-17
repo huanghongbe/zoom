@@ -1,5 +1,8 @@
 package com.huanghongbe.zoom.xo.vo;
 
+import com.huanghongbe.zoom.base.validator.annotion.NotBlank;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.base.vo.BaseVO;
 import lombok.Data;
 import lombok.ToString;
@@ -22,11 +25,13 @@ public class FeedbackVO extends BaseVO<FeedbackVO> {
     /**
      * 标题
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String title;
 
     /**
      * 反馈的内容
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String content;
 
     /**

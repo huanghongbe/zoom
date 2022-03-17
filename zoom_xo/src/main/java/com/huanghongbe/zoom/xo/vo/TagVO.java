@@ -1,6 +1,9 @@
 package com.huanghongbe.zoom.xo.vo;
 
 
+import com.huanghongbe.zoom.base.validator.annotion.NotBlank;
+import com.huanghongbe.zoom.base.validator.group.Insert;
+import com.huanghongbe.zoom.base.validator.group.Update;
 import com.huanghongbe.zoom.base.vo.BaseVO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,6 +19,7 @@ public class TagVO extends BaseVO<TagVO> {
     /**
      * 标签内容
      */
+    @NotBlank(groups = {Insert.class, Update.class})
     private String content;
 
     /**
