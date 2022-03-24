@@ -7,6 +7,7 @@ import com.huanghongbe.zoom.base.exception.ThrowableUtils;
 import com.huanghongbe.zoom.base.global.BaseSysConf;
 import com.huanghongbe.zoom.base.global.Constants;
 import com.huanghongbe.zoom.base.holder.RequestHolder;
+import com.huanghongbe.zoom.base.validator.group.Delete;
 import com.huanghongbe.zoom.base.validator.group.GetList;
 import com.huanghongbe.zoom.base.validator.group.Insert;
 import com.huanghongbe.zoom.commons.entity.*;
@@ -571,6 +572,53 @@ public class CommentRestApi {
         }
     }
 
+    @BussinessLog(value = "删除评论", behavior = EBehavior.DELETE_COMMENT)
+    @PostMapping("/delete")
+    public String deleteBatch(HttpServletRequest request, @Validated({Delete.class}) @RequestBody CommentVO commentVO, BindingResult result) {
+
+        ThrowableUtils.checkParamArgument(result);
+        Comment comment = commentService.getById(commentVO.getUid());
+        // 判断该评论是否能够删除
+        if (!comment.getUserUid().equals(commentVO.getUserUid())) {
+            return ResultUtil.result(SysConf.ERROR, MessageConf.DATA_NO_PRIVILEGE);
+        }
+        comment.setStatus(EStatus.DISABLED);
+        comment.updateById();
+
+        // 获取该评论下的子评论进行删除
+        // 传入需要被删除的评论 【因为这里是一条，我们需要用List包装一下，以后可以用于多评论的子评论删除】
+        List<Comment> commentList = new ArrayList<>(Constants.NUM_ONE);
+        commentList.add(comment);
+
+        // 判断删除的是一级评论还是子评论
+        String firstCommentUid = "";
+        if (StringUtils.isNotEmpty(comment.getFirstCommentUid())) {
+            // 删除的是子评论
+            firstCommentUid = comment.getFirstCommentUid();
+        } else {
+            // 删除的是一级评论
+            firstCommentUid = comment.getUid();
+        }
+
+        // 获取该评论一级评论下所有的子评论
+        QueryWrapper<Comment> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq(SQLConf.FIRST_COMMENT_UID, firstCommentUid);
+        queryWrapper.eq(SQLConf.STATUS, EStatus.ENABLE);
+        List<Comment> toCommentList = commentService.list(queryWrapper);
+        List<Comment> resultList = new ArrayList<>();
+        this.getToCommentList(comment, toCommentList, resultList);
+        // 将所有的子评论也删除
+        if (resultList.size() > 0) {
+            resultList.forEach(item -> {
+                item.setStatus(EStatus.DISABLED);
+                item.setUpdateTime(new Date());
+            });
+            commentService.updateBatchById(resultList);
+        }
+
+        return ResultUtil.result(SysConf.SUCCESS, MessageConf.DELETE_SUCCESS);
+    }
+
     @PostMapping("/readUserReceiveCommentCount")
     public String readUserReceiveCommentCount(HttpServletRequest request) {
         log.info("阅读用户接收的评论数");
@@ -581,6 +629,24 @@ public class CommentRestApi {
             redisUtil.delete(redisKey);
         }
         return ResultUtil.successWithMessage("阅读成功");
+    }
+    /**
+     * 获取某条评论下的所有子评论
+     *
+     * @return
+     */
+    private void getToCommentList(Comment comment, List<Comment> commentList, List<Comment> resultList) {
+        if (comment == null) {
+            return;
+        }
+        String commentUid = comment.getUid();
+        for (Comment item : commentList) {
+            if (commentUid.equals(item.getToUid())) {
+                resultList.add(item);
+                // 寻找子评论的子评论
+                getToCommentList(item, commentList, resultList);
+            }
+        }
     }
 
 }
