@@ -14,6 +14,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -31,7 +32,7 @@ public class BlogListener {
     private RedisUtil redisUtil;
     @Autowired
     private WebFeignClient webFeignClient;
-
+    @Resource
     private SearchFeignClient searchFeignClient;
     @RabbitListener(queues = "zoom.blog")
     public void updateRedis(Map<String, String> map) {
@@ -75,10 +76,11 @@ public class BlogListener {
                         if (ESearchModel.ES.equals(searchModel)) {
                             // 删除ElasticSearch博客索引
                             searchFeignClient.deleteElasticSearchByUids(uid);
-                        } else if (ESearchModel.SOLR.equals(searchModel)) {
-                            // 删除Solr索引
-                            searchFeignClient.deleteSolrIndexByUid(uid);
                         }
+//                        else if (ESearchModel.SOLR.equals(searchModel)) {
+//                            // 删除Solr索引
+//                            searchFeignClient.deleteSolrIndexByUid(uid);
+//                        }
                     }
                     break;
 
@@ -95,10 +97,11 @@ public class BlogListener {
                         if (ESearchModel.ES.equals(searchModel)) {
                             // 增加ES索引
                             searchFeignClient.addElasticSearchIndexByUid(uid);
-                        } else if (ESearchModel.SOLR.equals(searchModel)) {
-                            // 增加solr索引
-                            searchFeignClient.addSolrIndexByUid(uid);
                         }
+//                        else if (ESearchModel.SOLR.equals(searchModel)) {
+//                            // 增加solr索引
+//                            searchFeignClient.addSolrIndexByUid(uid);
+//                        }
                     }
                     break;
 
@@ -108,10 +111,11 @@ public class BlogListener {
                         if (ESearchModel.ES.equals(searchModel)) {
                             // 增加ES索引
                             searchFeignClient.addElasticSearchIndexByUid(uid);
-                        } else if (ESearchModel.SOLR.equals(searchModel)) {
-                            // 增加solr索引
-                            searchFeignClient.updateSolrIndexByUid(uid);
                         }
+//                        else if (ESearchModel.SOLR.equals(searchModel)) {
+//                            // 增加solr索引
+//                            searchFeignClient.updateSolrIndexByUid(uid);
+//                        }
                     }
                     break;
 
@@ -121,10 +125,11 @@ public class BlogListener {
                         if (ESearchModel.ES.equals(searchModel)) {
                             // 增加ES索引
                             searchFeignClient.deleteElasticSearchByUid(uid);
-                        } else if (ESearchModel.SOLR.equals(searchModel)) {
-                            // 增加solr索引
-                            searchFeignClient.deleteSolrIndexByUid(uid);
                         }
+//                        else if (ESearchModel.SOLR.equals(searchModel)) {
+//                            // 增加solr索引
+//                            searchFeignClient.deleteSolrIndexByUid(uid);
+//                        }
                     }
                     break;
                     default: {
