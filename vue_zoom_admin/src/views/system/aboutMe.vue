@@ -112,7 +112,7 @@
         </div>
       </el-tab-pane>
 
-      <!-- <el-tab-pane label="修改密码" name="four">
+      <el-tab-pane label="修改密码" name="four">
         <span slot="label"><i class="el-icon-edit"></i> 修改密码</span>
         <el-form :rules="rules" style="margin-left: 20px;" label-position="left" :model="changePwdForm"  label-width="80px" ref="changePwdForm">
           <el-form-item label="旧密码" prop="oldPwd">
@@ -133,7 +133,7 @@
           </el-form-item>
 
         </el-form>
-      </el-tab-pane> -->
+      </el-tab-pane>
 
     </el-tabs>
 

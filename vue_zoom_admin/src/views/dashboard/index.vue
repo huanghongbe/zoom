@@ -1,9 +1,9 @@
 <template>
   <div class="dashboard-editor-container">
     <!-- 右上角github图标 -->
-    <!-- <el-tooltip content="Github源码" effect="dark" placement="bottom">
+    <el-tooltip content="Github源码" effect="dark" placement="bottom">
       <github-corner style="position: absolute; top: 0px; border: 0; right: 0;"></github-corner>
-    </el-tooltip> -->
+    </el-tooltip>
 
     <!-- 顶部内容 -->
     <el-row class="panel-group" :gutter="40">
@@ -129,7 +129,7 @@ import {
   getBlogCountByTag,
   getBlogCountByBlogSort
 } from "@/api/index";
-//import GithubCorner from "@/components/GithubCorner";
+import GithubCorner from "@/components/GithubCorner";
 import PieChart from "@/components/PieChart";
 import TodoList from "@/components/TodoList";
 import BarChart from "@/components/BarChart";
@@ -144,7 +144,7 @@ export default {
     ...mapGetters(["name", "roles"])
   },
   components: {
-  
+    GithubCorner,
     PieChart,
     TodoList,
     BarChart,

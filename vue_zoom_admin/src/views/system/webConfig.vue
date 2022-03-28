@@ -89,7 +89,7 @@
       </el-tab-pane>
 
 
-      <!-- <el-tab-pane v-permission="'/webConfig/getWebConfig'">
+      <el-tab-pane v-permission="'/webConfig/getWebConfig'">
         <span slot="label">
           <i class="el-icon-date"></i> 评论&打赏
         </span>
@@ -176,7 +176,7 @@
           </el-form-item>
         </el-form>
 
-      </el-tab-pane> -->
+      </el-tab-pane>
 
       <el-tab-pane v-permission="'/webConfig/getWebConfig'">
         <span slot="label">
@@ -232,7 +232,7 @@
         </el-form>
       </el-tab-pane>
 
-      <!-- <el-tab-pane label="友链申请模板" v-permission="'/webConfig/getWebConfig'">
+      <el-tab-pane label="友链申请模板" v-permission="'/webConfig/getWebConfig'">
         <span slot="label"><i class="el-icon-edit"></i> 友链申请模板</span>
         <div class="editor-container">
           <CKEditor ref="editor" v-if="systemConfig.editorModel == '0'" :content="form.dashboardNotification" :height="500"></CKEditor>
@@ -241,7 +241,7 @@
         <div style="margin-top: 5px; margin-left: 10px;" >
           <el-button type="primary" @click="submitForm()" v-permission="'/system/editMe'">保 存</el-button>
         </div>
-      </el-tab-pane> -->
+      </el-tab-pane>
 
     </el-tabs>
 
@@ -409,7 +409,7 @@ export default {
       this.fileIds = data.fileIds;
       var fileId = this.fileIds.replace(",", "");
       if (this.photoList.length >= 1) {
-        this.form.fileUid = fileId;
+        this.fileIds = fileId;
         this.form.photoList = this.photoList;
       }
     },
@@ -419,7 +419,6 @@ export default {
     },
     deletePhoto: function() {
       this.form.photoList = null;
-      this.form.fileUid = "";
       this.fileIds = "";
       this.icon = false;
     },

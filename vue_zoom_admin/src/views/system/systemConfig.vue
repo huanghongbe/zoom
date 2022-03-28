@@ -8,12 +8,12 @@
           <aside>
             通过开关选择博客编辑时的文本编辑器，以及文件显示方式<br/>
           </aside>
-<!-- 
-          <el-form-item label="封面图片显示优先级">
-            <el-radio v-for="item in picturePriorityDictList" :key="item.uid" v-model="form.picturePriority" :label="item.dictValue" border size="medium">{{item.dictLabel}}</el-radio>
-          </el-form-item>
 
-          <el-form-item label="详情图片显示优先级">
+          <!-- <el-form-item label="封面图片显示优先级">
+            <el-radio v-for="item in picturePriorityDictList" :key="item.uid" v-model="form.picturePriority" :label="item.dictValue" border size="medium">{{item.dictLabel}}</el-radio>
+          </el-form-item> -->
+
+          <!-- <el-form-item label="详情图片显示优先级">
             <el-radio v-for="item in picturePriorityDictList" :key="item.uid" v-model="form.contentPicturePriority" :label="item.dictValue" border size="medium">{{item.dictLabel}}</el-radio>
           </el-form-item> -->
 
@@ -49,11 +49,11 @@
               </el-popover>
             </template>
             <el-radio v-for="item in searchModelDictList" :key="item.uid" v-model="form.searchModel" :label="item.dictValue" border size="medium">{{item.dictLabel}}</el-radio>
-          </el-form-item> -->
+          </el-form-item>
 
           <el-form-item>
             <el-button type="primary" @click="submitForm()" v-permission="'/systemConfig/editSystemConfig'">保 存</el-button>
-          </el-form-item>
+          </el-form-item> -->
 
         </el-form>
       </el-tab-pane>
@@ -141,9 +141,9 @@
           </el-form-item>
 
         </el-form>
-      </el-tab-pane> -->
+      </el-tab-pane>
 
-      <!-- <el-tab-pane name="five" v-permission="'/systemConfig/getSystemConfig'">
+      <el-tab-pane name="five" v-permission="'/systemConfig/getSystemConfig'">
         <span slot="label">
           <i class="el-icon-date"></i> Minio对象存储
         </span>
