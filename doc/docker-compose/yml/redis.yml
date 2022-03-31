@@ -1,0 +1,17 @@
+version: '3.1'
+services:
+  redis:
+    image: ccr.ccs.tencentyun.com/zoom/zoom_redis
+    restart: always
+    container_name: redis
+    ports:
+      - 6379:6379
+    command: redis-server --requirepass zoom --appendonly yes # 启动redis服务并添加密码为：mogu2018,并开启redis持久化配置
+    volumes:
+      - /home/lighthouse/zoom/data/redis_data:/data
+    networks:
+      - zoom
+
+networks:
+  zoom:
+    external: true

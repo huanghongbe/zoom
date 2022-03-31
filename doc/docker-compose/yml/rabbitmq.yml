@@ -1,0 +1,21 @@
+version: '3.1'
+services:
+  rabbitmq:
+    restart: always
+    image: ccr.ccs.tencentyun.com/zoom/zoom_rabbitmq
+    container_name: rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      TZ: Asia/Shanghai
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: zoom
+    volumes:
+      - /home/lighthouse/zoom/data/rabbitmq_data:/var/lib/rabbitmq/mnesia
+    networks:
+      - zoom
+
+networks:
+  zoom:
+    external: true

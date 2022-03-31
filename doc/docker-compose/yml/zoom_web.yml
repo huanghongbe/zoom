@@ -1,0 +1,19 @@
+version: '3'
+services:
+  #授权服务
+  zoom_web:
+    image: ccr.ccs.tencentyun.com/zoom/zoom_web:latest
+    container_name: zoom_web
+    restart: always
+    ports:
+      - 8603:8603
+    networks:
+      - zoom
+    environment:
+      - COMPOSE_PROJECT_NAME=zoom_web
+    volumes:
+      - /home/lighthouse/zoom/log/:/logs/
+      - /home/lighthouse/zoom/conf/zoom_web/:/config/
+networks:
+  zoom:
+    external: true

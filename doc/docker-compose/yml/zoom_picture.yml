@@ -1,0 +1,23 @@
+version: '3'
+services:
+  #授权服务
+  zoom_picture:
+    image: ccr.ccs.tencentyun.com/zoom/zoom_picture:latest
+    container_name: zoom_picture
+    restart: always
+    ports:
+      - 8602:8602
+    networks:
+      - zoom
+    environment:
+      - COMPOSE_PROJECT_NAME=zoom_picture
+    volumes:
+      #      - ../log/:/logs/
+      #      - ../config/mogu_gateway/:/config/
+      #      - ../data/mogu_data/:/home/mogu_blog/mogu_data/
+      - /home/lighthouse/zoom/log/:/logs/
+      - /home/lighthouse/zoom/conf/zoom_picture/:/config/
+      - /home/lighthouse/zoom/data/nginx_data/:/home/zoom/nginx_data/
+networks:
+  zoom:
+    external: true

@@ -1,0 +1,21 @@
+version: '3'
+services:
+  #授权服务
+  zoom_sms:
+    image: ccr.ccs.tencentyun.com/zoom/zoom_sms:latest
+    container_name: zoom_sms
+    restart: always
+    ports:
+      - 8604:8604
+    networks:
+      - zoom
+    environment:
+      - COMPOSE_PROJECT_NAME=zoom_sms
+    volumes:
+#      - ../log/:/logs/
+#      - ../config/mogu_sms/:/config/
+      - /home/lighthouse/zoom/log/:/logs/
+      - /home/lighthouse/zoom/conf/zoom_sms/:/config/
+networks:
+  zoom:
+    external: true

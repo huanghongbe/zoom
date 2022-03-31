@@ -4,7 +4,7 @@
 /node_modules
 #/vue_zoom_admin
 #/vue_zoom_web
-/doc
+#/doc
 ### STS ###
 .apt_generated
 .classpath

@@ -1,0 +1,26 @@
+version: '3.1'
+services:
+  mysql:
+    image: ccr.ccs.tencentyun.com/zoom/zoom_mysql
+    restart: always
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: zoom
+    command:
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+      --explicit_defaults_for_timestamp=true
+      --lower_case_table_names=1
+    ports:
+      - 3306:3306
+    volumes:
+      - /home/lighthouse/zoom/data/mysql_data:/var/lib/mysql
+      - /home/lighthouse/zoom/mysql/init/:/docker-entrypoint-initdb.d/
+#      - ../data/mysql_data:/var/lib/mysql
+#      - ./mysql/init/:/docker-entrypoint-initdb.d/
+    networks:
+      - zoom
+networks:
+  zoom:
+    external: true

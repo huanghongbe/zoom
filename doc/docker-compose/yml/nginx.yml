@@ -1,0 +1,19 @@
+version: '3'
+services:
+  nginx:
+    image: ccr.ccs.tencentyun.com/zoom/zoom_nginx
+    container_name: nginx
+    restart: always
+    ports:
+      - 80:80
+      - 8600:8600
+    networks:
+      - zoom
+    volumes:
+#      - ../data/mogu_data/:/home/mogu_blog/mogu_data/
+#      - ../config/mogu_data.conf:/etc/nginx/conf.d/default.conf
+      - /home/lighthouse/zoom/data/nginx_data:/home/zoom/nginx_data
+      - /home/lighthouse/zoom/conf/nginx.conf:/etc/nginx/conf.d/default.conf
+networks:
+  zoom:
+    external: true

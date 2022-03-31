@@ -1,0 +1,21 @@
+version: '3'
+services:
+  #授权服务
+  zoom_admin:
+    image: ccr.ccs.tencentyun.com/zoom/zoom_admin:latest
+    container_name: zoom_admin
+    restart: always
+    ports:
+      - 8601:8601
+    networks:
+      - zoom
+    environment:
+      - COMPOSE_PROJECT_NAME=zoom_admin
+    volumes:
+#      - ../log/:/logs/
+#      - ../config/mogu_admin/:/config/
+      - /home/lighthouse/zoom/log/:/logs/
+      - /home/lighthouse/zoom/conf/zoom_admin/:/config/
+networks:
+  zoom:
+    external: true

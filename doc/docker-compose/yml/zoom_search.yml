@@ -1,0 +1,21 @@
+version: '3'
+services:
+  #授权服务
+  zoom_search:
+    image: ccr.ccs.tencentyun.com/zoom/zoom_search:latest
+    container_name: zoom_search
+    restart: always
+    ports:
+      - 8605:8605
+    networks:
+      - zoom
+    environment:
+      - COMPOSE_PROJECT_NAME=zoom_search
+    volumes:
+#      - ../log/:/logs/
+#      - ../config/mogu_search/:/config/
+      - /home/lighthouse/zoom/log/:/logs/
+      - /home/lighthouse/zoom/conf/zoom_search/:/config/
+networks:
+  zoom:
+    external: true

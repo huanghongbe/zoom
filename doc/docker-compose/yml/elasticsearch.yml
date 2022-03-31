@@ -1,0 +1,27 @@
+version: '3.1'
+services:
+  elasticsearch:
+    image: ccr.ccs.tencentyun.com/zoom/zoom_elasticsearch
+    container_name: elasticsearch
+    restart: always
+    ports:
+      - 9200:9200
+      - 9300:9300
+    environment:
+      - cluster.name=zoom
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - TZ=Asia/Shanghai
+      - TAKE_FILE_OWNERSHIP=true
+    volumes:
+      - /home/lighthouse/zoom/log/elasticsearch:/usr/share/elasticsearch/logs
+      - /home/lighthouse/zoom/data/elasticsearch_data:/usr/share/elasticsearch/data
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    networks:
+      - zoom
+networks:
+  zoom:
+    external: true

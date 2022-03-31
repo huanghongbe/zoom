@@ -147,7 +147,7 @@ public class FileServiceImpl extends SuperServiceImpl<FileMapper, File> implemen
             projectName = request.getParameter(SysConf.PROJECT_NAME);
             sortName = request.getParameter(SysConf.SORT_NAME);
         } else if (SysConf.ADMIN.equals(source)) {
-            // 当图片从mogu-admin传递过来的时候
+            // 当图片从admin传递过来的时候
             userUid = request.getAttribute(SysConf.USER_UID).toString();
             adminUid = request.getAttribute(SysConf.ADMIN_UID).toString();
             projectName = request.getAttribute(SysConf.PROJECT_NAME).toString();
